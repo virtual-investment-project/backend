@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: investment-backend
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/investment_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: rootpassword
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
