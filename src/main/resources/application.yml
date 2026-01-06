@@ -17,3 +17,15 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "INPUT_YOUR_CLIENT_ID"
+            client-secret: "INPUT_YOUR_SECRET_KEY"
+            scope:
+              - profile
+              - email
+
