@@ -29,3 +29,7 @@ spring:
               - profile
               - email
 
+jwt:
+  secret: "INPUT_YOUR_SECRET_KEY="
+  access-expiration: 3600000  # 1시간 (밀리초)
+  refresh-expiration: 1209600000 # 14일
