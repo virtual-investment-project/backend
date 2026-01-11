@@ -36,14 +36,18 @@ class UserServiceTest {
 
         UserAdditionalInfoRequest request = new UserAdditionalInfoRequest();
         ReflectionTestUtils.setField(request, "nickname", "워렌버핏");
+        ReflectionTestUtils.setField(request, "age", 22);
         ReflectionTestUtils.setField(request, "school", "하버드");
+        ReflectionTestUtils.setField(request, "company", "");
 
         // when
         userService.updateAdditionalInfo(user, request);
 
         // then
         assertThat(user.getNickname()).isEqualTo("워렌버핏");
+        assertThat(user.getAge()).isEqualTo(22);
         assertThat(user.getSchool()).isEqualTo("하버드");
+        assertThat(user.getCompany()).isEqualTo("");
         assertThat(user.getRole()).isEqualTo(Role.USER);
 
         verify(userRepository).save(user);

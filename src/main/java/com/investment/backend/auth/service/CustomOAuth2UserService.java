@@ -55,7 +55,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private User saveOrUpdate(Map<String, Object> attributes, SocialType socialType) {
-        // 구글은 "sub"이라는 이름으로 고유 ID를 줌
         String socialId = (String) attributes.get("sub");
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");

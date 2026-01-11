@@ -15,7 +15,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public void updateAdditionalInfo(User user, UserAdditionalInfoRequest request) {
-        user.updateAdditionalInfo(request.getNickname(), request.getSchool());
+        user.updateAdditionalInfo(request.getNickname(), request.getAge(), request.getSchool(), request.getCompany());
         userRepository.save(user);
     }
 }
