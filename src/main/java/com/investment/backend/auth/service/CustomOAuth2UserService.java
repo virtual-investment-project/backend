@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j // 로그를 찍기 위한 어노테이션 (System.out.println 대신 씀)
-@Service // 스프링에게 "이건 비즈니스 로직을 담당하는 녀석이야"라고 알려줌
+@Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
@@ -55,7 +55,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private User saveOrUpdate(Map<String, Object> attributes, SocialType socialType) {
-        // 구글은 "sub"이라는 이름으로 고유 ID를 줌
         String socialId = (String) attributes.get("sub");
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");

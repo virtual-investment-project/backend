@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 import com.investment.backend.user.enums.Role;
 import com.investment.backend.user.enums.SocialType;
 
@@ -14,8 +16,8 @@ import com.investment.backend.user.enums.SocialType;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -25,6 +27,13 @@ public class User {
 
     private String nickname;
 
+    @Column(nullable = false)
+    private Integer age;
+
+    private String school;
+
+    private String company;
+
     @Enumerated(EnumType.STRING)
     private SocialType socialType;
 
@@ -33,26 +42,31 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(nullable = false)
     private String refreshToken;
 
-    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private String school; // 학교 정보 추가하신 것 아주 좋습니다!
-
     @Builder
-    public User(String email, String name, Role role, SocialType socialType, String socialId) {
+    public User(String email, String name, Role role, Integer age,
+                SocialType socialType, String socialId, String refreshToken) {
         this.email = email;
         this.name = name;
         this.role = role;
+        this.age = (age != null) ? age : 0;
         this.socialType = socialType;
         this.socialId = socialId;
+        this.refreshToken = (refreshToken != null) ? refreshToken : "";
+        this.createdAt = LocalDateTime.now();
     }
 
-    public void updateAdditionalInfo(String nickname, String school) {
+    public void updateAdditionalInfo(String nickname, Integer age, String school, String company) {
         this.nickname = nickname;
+        this.age = age;
         this.school = school;
-        this.role = Role.USER; // 정보를 입력하면 정회원(USER)으로 등업
+        this.company = company;
+        this.role = Role.USER; // 등업
     }
 
     public void updateRefreshToken(String updateRefreshToken) {
