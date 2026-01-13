@@ -2,7 +2,6 @@ package com.investment.backend.user.entity; // 패키지명 확인!
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
