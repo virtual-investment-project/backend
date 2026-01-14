@@ -31,4 +31,15 @@ public class TestController {
                 "</body>" +
                 "</html>";
     }
+
+    @GetMapping("/login-failure")
+    public String loginFailure(@RequestParam String error) {
+        return "<html>" +
+                "<body>" +
+                "<h1>❌ 로그인 실패!</h1>" +
+                "<h3>에러 메시지:</h3>" +
+                "<p>" + error + "</p>" +
+                "</body>" +
+                "</html>";
+    }
 }

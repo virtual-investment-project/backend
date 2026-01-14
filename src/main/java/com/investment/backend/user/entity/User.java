@@ -2,7 +2,6 @@ package com.investment.backend.user.entity; // 패키지명 확인!
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -71,5 +70,14 @@ public class User {
 
     public void updateRefreshToken(String updateRefreshToken) {
         this.refreshToken = updateRefreshToken;
+    }
+
+    public void updateProfile(String school, String company) {
+        if (school != null) {
+            this.school = school;
+        }
+        if (company != null) {
+            this.company = company;
+        }
     }
 }

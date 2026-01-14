@@ -4,9 +4,9 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/investment_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: rootpassword
+    url: ${DB_URL:jdbc:mysql://localhost:3306/investment_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:rootpassword}
 
   jpa:
     hibernate:
@@ -23,13 +23,20 @@ spring:
       client:
         registration:
           google:
-            client-id: "INPUT_YOUR_CLIENT_ID"
-            client-secret: "INPUT_YOUR_SECRET_KEY"
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             scope:
               - profile
               - email
 
 jwt:
-  secret: "INPUT_YOUR_SECRET_KEY="
+  secret: ${JWT_SECRET:VlwEyVlpkZ9Ws5vQy7XgrkfVq8gVjnmT9F3eLz6Kx1A=}
   access-expiration: 3600000  # 1시간 (밀리초)
   refresh-expiration: 1209600000 # 14일
+
+# OAuth 리다이렉트 설정
+oauth:
+  redirect:
+    success-url: ${OAUTH_SUCCESS_REDIRECT_URL:http://localhost:8080/login-success}
+    failure-url: ${OAUTH_FAILURE_REDIRECT_URL:http://localhost:8080/login-failure}
+

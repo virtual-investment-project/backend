@@ -2,7 +2,6 @@ package com.investment.backend.jwt.filter;
 
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.repository.UserRepository;
-import com.investment.backend.user.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

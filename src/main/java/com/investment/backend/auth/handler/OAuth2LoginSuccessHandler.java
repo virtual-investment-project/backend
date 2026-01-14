@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -25,6 +26,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+
+    @Value("${oauth.redirect.success-url}")
+    private String successRedirectUrl;
 
     @Override
     @Transactional
@@ -54,8 +58,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             userRepository.saveAndFlush(user);
 
             // 5. 토큰을 담아서 리다이렉트 시킬 주소 만들기
-            // 나중에 프론트엔드 주소(localhost:3000 등)나 앱 스킴(investmentapp://)으로 바꿔야 합니다.
-            String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/login-success")
+            // 환경변수로 설정된 URL 사용 (앱 딥링크: investmentapp://oauth2/callback)
+            String targetUrl = UriComponentsBuilder.fromUriString(successRedirectUrl)
                     .queryParam("accessToken", accessToken)
                     .queryParam("refreshToken", refreshToken)
                     .queryParam("role", user.getRole().name())
