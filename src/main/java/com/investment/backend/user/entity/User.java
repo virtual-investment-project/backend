@@ -71,4 +71,13 @@ public class User {
     public void updateRefreshToken(String updateRefreshToken) {
         this.refreshToken = updateRefreshToken;
     }
+
+    public void updateProfile(String school, String company) {
+        if (school != null) {
+            this.school = school;
+        }
+        if (company != null) {
+            this.company = company;
+        }
+    }
 }
