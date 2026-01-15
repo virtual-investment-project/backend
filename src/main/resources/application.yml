@@ -34,9 +34,4 @@ jwt:
   access-expiration: 3600000  # 1시간 (밀리초)
   refresh-expiration: 1209600000 # 14일
 
-# OAuth 리다이렉트 설정
-oauth:
-  redirect:
-    success-url: ${OAUTH_SUCCESS_REDIRECT_URL:http://localhost:8080/login-success}
-    failure-url: ${OAUTH_FAILURE_REDIRECT_URL:http://localhost:8080/login-failure}
 
