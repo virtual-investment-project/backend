@@ -1,16 +1,14 @@
 package com.investment.backend.config;
 
-import com.investment.backend.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.investment.backend.auth.handler.OAuth2LoginSuccessHandler;
-import com.investment.backend.auth.handler.OAuth2LoginFailureHandler;
 import com.investment.backend.jwt.filter.JwtAuthenticationFilter;
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.repository.UserRepository;
@@ -21,9 +19,6 @@ import com.investment.backend.user.repository.UserRepository;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
@@ -33,19 +28,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // CSRF 보안 끄기 (테스트 편의상. 실무에선 앱 방식에 따라 설정)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 폼 안 씀
                 .httpBasic(AbstractHttpConfigurer::disable) // HTTP Basic 인증 안 씀
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 끄기
 
                 // URL별 권한 관리
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/test", "/login/**").permitAll() // 메인, 테스트, 로그인은 누구나 접속 가능
-                        .requestMatchers("/api/users/additional-info").hasAuthority("GUEST")
-                        .anyRequest().authenticated() // 그 외 모든 요청은 로그인해야 함
-                )
-
-                // 소셜 로그인 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
-                        .failureHandler(oAuth2LoginFailureHandler)
+                        .requestMatchers("/api/auth/**").permitAll() // 이 주소는 누구나 통과 (로그인해야 하니까)
+                        .anyRequest().authenticated() // 나머지는 토큰 필요
                 );
 
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userRepository), UsernamePasswordAuthenticationFilter.class);
