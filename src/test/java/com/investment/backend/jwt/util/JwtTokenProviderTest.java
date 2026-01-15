@@ -1,5 +1,6 @@
 package com.investment.backend.jwt.util;
 
+import com.investment.backend.user.enums.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,10 @@ class JwtTokenProviderTest {
     void createToken() {
         // given
         String email = "test@gmail.com";
+        Role role = Role.USER;
 
         // when
-        String accessToken = jwtTokenProvider.createAccessToken(email);
+        String accessToken = jwtTokenProvider.createAccessToken(email, role);
 
         // then
         System.out.println("생성된 토큰: " + accessToken);
@@ -35,7 +37,8 @@ class JwtTokenProviderTest {
     void extractEmail() {
         // given
         String email = "hello@kakao.com";
-        String token = jwtTokenProvider.createAccessToken(email);
+        Role role = Role.USER;
+        String token = jwtTokenProvider.createAccessToken(email, role);
 
         // when
         String extractedEmail = jwtTokenProvider.extractEmail(token);
@@ -48,7 +51,7 @@ class JwtTokenProviderTest {
     @DisplayName("3. 유효한 토큰인지 검증하는 기능 확인")
     void validateToken() {
         // given
-        String token = jwtTokenProvider.createAccessToken("user@naver.com");
+        String token = jwtTokenProvider.createAccessToken("user@naver.com", Role.USER);
 
         // when
         boolean isValid = jwtTokenProvider.validateToken(token);
