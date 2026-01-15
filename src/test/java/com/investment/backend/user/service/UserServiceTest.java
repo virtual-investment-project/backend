@@ -1,6 +1,7 @@
 package com.investment.backend.user.service;
 
 import com.investment.backend.user.enums.Role;
+import com.investment.backend.user.enums.SocialType;
 import com.investment.backend.user.dto.UserAdditionalInfoRequest;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.repository.UserRepository;
@@ -30,7 +31,12 @@ class UserServiceTest {
         // given
         User user = User.builder()
                 .email("test@gmail.com")
+                .name("테스트")
                 .role(Role.GUEST)
+                .age(0)
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
+                .refreshToken("")
                 .build();
 
 

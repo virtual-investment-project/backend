@@ -2,7 +2,6 @@ package com.investment.backend.mypage.profile.service;
 
 import com.investment.backend.mypage.profile.dto.ProfileResponse;
 import com.investment.backend.mypage.profile.dto.ProfileUpdateRequest;
-import com.investment.backend.mypage.profile.service.MyPageService;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.enums.Role;
 import com.investment.backend.user.enums.SocialType;
@@ -36,9 +35,9 @@ class MyPageServiceTest {
                 .name("홍길동")
                 .role(Role.USER)
                 .age(25)
-                .socialType(SocialType.KAKAO)
-                .socialId("kakao123")
-                .refreshToken("token")
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
+                .refreshToken("valid-refresh-token")
                 .build();
         
         ReflectionTestUtils.setField(user, "nickname", "투자왕");
@@ -66,9 +65,9 @@ class MyPageServiceTest {
                 .name("홍길동")
                 .role(Role.USER)
                 .age(25)
-                .socialType(SocialType.KAKAO)
-                .socialId("kakao123")
-                .refreshToken("token")
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
+                .refreshToken("valid-refresh-token")
                 .build();
         
         ReflectionTestUtils.setField(user, "school", "연세대학교");
@@ -99,9 +98,9 @@ class MyPageServiceTest {
                 .name("홍길동")
                 .role(Role.USER)
                 .age(25)
-                .socialType(SocialType.KAKAO)
-                .socialId("kakao123")
-                .refreshToken("token")
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
+                .refreshToken("valid-refresh-token")
                 .build();
         
         ReflectionTestUtils.setField(user, "school", "연세대학교");
@@ -132,9 +131,9 @@ class MyPageServiceTest {
                 .name("홍길동")
                 .role(Role.USER)
                 .age(25)
-                .socialType(SocialType.KAKAO)
-                .socialId("kakao123")
-                .refreshToken("token")
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
+                .refreshToken("valid-refresh-token")
                 .build();
         
         ReflectionTestUtils.setField(user, "school", "연세대학교");
@@ -157,7 +156,7 @@ class MyPageServiceTest {
     }
 
     @Test
-    @DisplayName("로그아웃 시 RefreshToken이 빈 문자열로 업데이트된다")
+    @DisplayName("로그아웃 시 RefreshToken이 null로 업데이트된다")
     void logout() {
         // given
         User user = User.builder()
@@ -165,8 +164,8 @@ class MyPageServiceTest {
                 .name("홍길동")
                 .role(Role.USER)
                 .age(25)
-                .socialType(SocialType.KAKAO)
-                .socialId("kakao123")
+                .socialType(SocialType.GOOGLE)
+                .socialId("google123")
                 .refreshToken("valid-refresh-token")
                 .build();
 

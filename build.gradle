@@ -39,6 +39,8 @@ dependencies {
 	// Security & OAuth2
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'com.google.api-client:google-api-client:2.2.0'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
 
 	// JWT (토큰 생성용)
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
