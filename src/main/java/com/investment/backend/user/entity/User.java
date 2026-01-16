@@ -49,7 +49,7 @@ public class User {
 
     @Builder
     public User(String email, String name, Role role, Integer age,
-                SocialType socialType, String socialId, String refreshToken) {
+            SocialType socialType, String socialId, String refreshToken) {
         this.email = email;
         this.name = name;
         this.role = role;
