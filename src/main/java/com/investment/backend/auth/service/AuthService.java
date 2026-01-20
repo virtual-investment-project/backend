@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.investment.backend.auth.dto.TokenResponse;
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.enums.Role;
@@ -12,6 +13,7 @@ import com.investment.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
@@ -64,12 +67,14 @@ public class AuthService {
             // 4. 앱으로 내려줄 응답 생성 (토큰 + Role)
             String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
-
-            user.updateRefreshToken(refreshToken);
+            
+            // Refresh Token을 해시화하여 DB에 저장
+            String hashedRefreshToken = passwordEncoder.encode(refreshToken);
+            user.updateRefreshToken(hashedRefreshToken);
 
             Map<String, Object> result = new HashMap<>();
             result.put("accessToken", accessToken);
-            result.put("refreshToken", refreshToken);
+            result.put("refreshToken", refreshToken); // 클라이언트에는 원본 토큰 전달
             result.put("role", user.getRole().name());
 
             return result;
@@ -78,5 +83,34 @@ public class AuthService {
             log.error("Google Login Process Error", e);
             throw new RuntimeException("로그인 처리 중 오류 발생");
         }
+    }
+
+    @Transactional
+    public TokenResponse refreshAccessToken(String refreshToken) {
+        // Refresh Token 유효성 검증
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
+        }
+
+        // Refresh Token에서 이메일 추출
+        String email = jwtTokenProvider.extractEmail(refreshToken);
+
+        // DB에서 사용자 조회 및 Refresh Token 일치 여부 확인
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // DB에 저장된 해시화된 Refresh Token과 비교
+        if (user.getRefreshToken() == null || 
+            !passwordEncoder.matches(refreshToken, user.getRefreshToken())) {
+            throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
+        }
+
+        // 새로운 Access Token 생성 (Refresh Token은 재사용)
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
+
+        return TokenResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(refreshToken) // 기존 Refresh Token 그대로 반환
+                .build();
     }
 }
