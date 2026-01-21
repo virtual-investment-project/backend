@@ -13,8 +13,8 @@ import com.investment.backend.user.enums.SocialType;
 import com.investment.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final PasswordEncoder passwordEncoder;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
@@ -67,8 +66,8 @@ public class AuthService {
             String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
             
-            // Refresh Token을 해시화하여 DB에 저장
-            String hashedRefreshToken = passwordEncoder.encode(refreshToken);
+            // Refresh Token을 SHA-256으로 해시화하여 DB에 저장
+            String hashedRefreshToken = DigestUtils.sha256Hex(refreshToken);
             user.updateRefreshToken(hashedRefreshToken);
 
             return GoogleLoginResponse.builder()
@@ -102,7 +101,8 @@ public class AuthService {
             throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
         }
         
-        if (!passwordEncoder.matches(refreshToken, user.getRefreshToken())) {
+        String hashedRefreshToken = DigestUtils.sha256Hex(refreshToken);
+        if (!hashedRefreshToken.equals(user.getRefreshToken())) {
             throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
         }
 
@@ -110,8 +110,8 @@ public class AuthService {
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
         
-        // 새로운 Refresh Token을 해시화하여 DB에 저장 (기존 토큰 무효화)
-        String hashedNewRefreshToken = passwordEncoder.encode(newRefreshToken);
+        // 새로운 Refresh Token을 SHA-256으로 해시화하여 DB에 저장 (기존 토큰 무효화)
+        String hashedNewRefreshToken = DigestUtils.sha256Hex(newRefreshToken);
         user.updateRefreshToken(hashedNewRefreshToken);
 
         return TokenResponse.builder()

@@ -17,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -35,9 +34,6 @@ class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
     @InjectMocks
     private AuthService authService;
 
@@ -47,7 +43,6 @@ class AuthServiceTest {
     private final String testSocialId = "google123";
     private final String testAccessToken = "test-access-token";
     private final String testRefreshToken = "test-refresh-token";
-    private final String hashedRefreshToken = "hashed-refresh-token";
 
     @BeforeEach
     void setUp() {
@@ -87,7 +82,6 @@ class AuthServiceTest {
         // 토큰 생성
         when(jwtTokenProvider.createAccessToken(testEmail, Role.GUEST)).thenReturn(testAccessToken);
         when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(testRefreshToken);
-        when(passwordEncoder.encode(testRefreshToken)).thenReturn(hashedRefreshToken);
 
         // when
         try (MockedConstruction<GoogleIdTokenVerifier.Builder> builderConstruction = mockConstruction(
@@ -109,7 +103,6 @@ class AuthServiceTest {
             verify(userRepository).save(any(User.class));
             verify(jwtTokenProvider).createAccessToken(testEmail, Role.GUEST);
             verify(jwtTokenProvider).createRefreshToken(testEmail);
-            verify(passwordEncoder).encode(testRefreshToken);
         }
     }
 
@@ -143,7 +136,6 @@ class AuthServiceTest {
         // 토큰 생성
         when(jwtTokenProvider.createAccessToken(testEmail, Role.USER)).thenReturn(testAccessToken);
         when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(testRefreshToken);
-        when(passwordEncoder.encode(testRefreshToken)).thenReturn(hashedRefreshToken);
 
         // when
         try (MockedConstruction<GoogleIdTokenVerifier.Builder> builderConstruction = mockConstruction(
@@ -198,7 +190,9 @@ class AuthServiceTest {
         String refreshToken = "valid-refresh-token";
         String newAccessToken = "new-access-token";
         String newRefreshToken = "new-refresh-token";
-        String hashedNewRefreshToken = "hashed-new-refresh-token";
+        
+        // SHA-256 해시값 계산
+        String hashedRefreshToken = org.apache.commons.codec.digest.DigestUtils.sha256Hex(refreshToken);
         
         User user = User.builder()
                 .email(testEmail)
@@ -210,10 +204,8 @@ class AuthServiceTest {
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
         when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(testEmail);
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(refreshToken, hashedRefreshToken)).thenReturn(true);
         when(jwtTokenProvider.createAccessToken(testEmail, Role.USER)).thenReturn(newAccessToken);
         when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(newRefreshToken);
-        when(passwordEncoder.encode(newRefreshToken)).thenReturn(hashedNewRefreshToken);
 
         // when
         TokenResponse result = authService.refreshAccessToken(refreshToken);
@@ -226,10 +218,8 @@ class AuthServiceTest {
         verify(jwtTokenProvider).validateToken(refreshToken);
         verify(jwtTokenProvider).extractEmail(refreshToken);
         verify(userRepository).findByEmail(testEmail);
-        verify(passwordEncoder).matches(refreshToken, hashedRefreshToken);
         verify(jwtTokenProvider).createAccessToken(testEmail, Role.USER);
         verify(jwtTokenProvider).createRefreshToken(testEmail);
-        verify(passwordEncoder).encode(newRefreshToken);
     }
 
     @Test
@@ -245,7 +235,7 @@ class AuthServiceTest {
                 .hasMessage("유효하지 않은 Refresh Token입니다.");
 
         verify(jwtTokenProvider).validateToken(invalidRefreshToken);
-        verifyNoMoreInteractions(jwtTokenProvider, userRepository, passwordEncoder);
+        verifyNoMoreInteractions(jwtTokenProvider, userRepository);
     }
 
     @Test
@@ -286,14 +276,12 @@ class AuthServiceTest {
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
         when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(testEmail);
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(refreshToken, wrongHashedToken)).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> authService.refreshAccessToken(refreshToken))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Refresh Token이 일치하지 않습니다.");
 
-        verify(passwordEncoder).matches(refreshToken, wrongHashedToken);
         verify(jwtTokenProvider, never()).createAccessToken(anyString(), any(Role.class));
     }
 
