@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class RefreshTokenRequest {
+public class GoogleLoginRequest {
     
-    @NotBlank(message = "Refresh Token은 필수입니다.")
-    private String refreshToken;
+    @NotBlank(message = "ID Token은 필수입니다.")
+    private String idToken;
 }

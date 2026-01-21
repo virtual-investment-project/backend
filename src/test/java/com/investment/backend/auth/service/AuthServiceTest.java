@@ -2,6 +2,7 @@ package com.investment.backend.auth.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.investment.backend.auth.dto.GoogleLoginResponse;
 import com.investment.backend.auth.dto.TokenResponse;
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.entity.User;
@@ -19,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -97,13 +97,13 @@ class AuthServiceTest {
                     when(mock.build()).thenReturn(mockVerifier);
                 })) {
             
-            Map<String, Object> result = authService.googleLogin(idTokenString);
+            GoogleLoginResponse result = authService.googleLogin(idTokenString);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.get("accessToken")).isEqualTo(testAccessToken);
-            assertThat(result.get("refreshToken")).isEqualTo(testRefreshToken);
-            assertThat(result.get("role")).isEqualTo("GUEST");
+            assertThat(result.getAccessToken()).isEqualTo(testAccessToken);
+            assertThat(result.getRefreshToken()).isEqualTo(testRefreshToken);
+            assertThat(result.getRole()).isEqualTo("GUEST");
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository).save(any(User.class));
@@ -153,13 +153,13 @@ class AuthServiceTest {
                     when(mock.build()).thenReturn(mockVerifier);
                 })) {
             
-            Map<String, Object> result = authService.googleLogin(idTokenString);
+            GoogleLoginResponse result = authService.googleLogin(idTokenString);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.get("accessToken")).isEqualTo(testAccessToken);
-            assertThat(result.get("refreshToken")).isEqualTo(testRefreshToken);
-            assertThat(result.get("role")).isEqualTo("USER");
+            assertThat(result.getAccessToken()).isEqualTo(testAccessToken);
+            assertThat(result.getRefreshToken()).isEqualTo(testRefreshToken);
+            assertThat(result.getRole()).isEqualTo("USER");
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository, never()).save(any(User.class)); // 기존 사용자이므로 저장 X

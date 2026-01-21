@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.investment.backend.auth.dto.GoogleLoginResponse;
 import com.investment.backend.auth.dto.TokenResponse;
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.entity.User;
@@ -18,8 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -35,7 +34,7 @@ public class AuthService {
     private String googleClientId;
 
     @Transactional
-    public Map<String, Object> googleLogin(String idTokenString) {
+    public GoogleLoginResponse googleLogin(String idTokenString) {
         try {
             // 1. 구글 토큰 검증
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
@@ -72,12 +71,11 @@ public class AuthService {
             String hashedRefreshToken = passwordEncoder.encode(refreshToken);
             user.updateRefreshToken(hashedRefreshToken);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("accessToken", accessToken);
-            result.put("refreshToken", refreshToken); // 클라이언트에는 원본 토큰 전달
-            result.put("role", user.getRole().name());
-
-            return result;
+            return GoogleLoginResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .role(user.getRole().name())
+                    .build();
 
         } catch (Exception e) {
             log.error("Google Login Process Error", e);
