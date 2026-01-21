@@ -100,8 +100,11 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // DB에 저장된 해시화된 Refresh Token과 비교
-        if (user.getRefreshToken() == null || 
-            !passwordEncoder.matches(refreshToken, user.getRefreshToken())) {
+        if (user.getRefreshToken() == null) {
+            throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
+        }
+        
+        if (!passwordEncoder.matches(refreshToken, user.getRefreshToken())) {
             throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
         }
 
