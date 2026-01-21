@@ -197,6 +197,8 @@ class AuthServiceTest {
         // given
         String refreshToken = "valid-refresh-token";
         String newAccessToken = "new-access-token";
+        String newRefreshToken = "new-refresh-token";
+        String hashedNewRefreshToken = "hashed-new-refresh-token";
         
         User user = User.builder()
                 .email(testEmail)
@@ -210,6 +212,8 @@ class AuthServiceTest {
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(refreshToken, hashedRefreshToken)).thenReturn(true);
         when(jwtTokenProvider.createAccessToken(testEmail, Role.USER)).thenReturn(newAccessToken);
+        when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(newRefreshToken);
+        when(passwordEncoder.encode(newRefreshToken)).thenReturn(hashedNewRefreshToken);
 
         // when
         TokenResponse result = authService.refreshAccessToken(refreshToken);
@@ -217,13 +221,15 @@ class AuthServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getAccessToken()).isEqualTo(newAccessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
 
         verify(jwtTokenProvider).validateToken(refreshToken);
         verify(jwtTokenProvider).extractEmail(refreshToken);
         verify(userRepository).findByEmail(testEmail);
         verify(passwordEncoder).matches(refreshToken, hashedRefreshToken);
         verify(jwtTokenProvider).createAccessToken(testEmail, Role.USER);
+        verify(jwtTokenProvider).createRefreshToken(testEmail);
+        verify(passwordEncoder).encode(newRefreshToken);
     }
 
     @Test

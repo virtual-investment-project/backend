@@ -36,7 +36,7 @@ public class AuthService {
     @Transactional
     public GoogleLoginResponse googleLogin(String idTokenString) {
         try {
-            // 1. 구글 토큰 검증
+            // 구글 토큰 검증
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
@@ -47,13 +47,13 @@ public class AuthService {
                 throw new IllegalArgumentException("Invalid ID Token");
             }
 
-            // 2. 유저 정보 추출
+            // 유저 정보 추출
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
             String name = (String) payload.get("name");
             String socialId = payload.getSubject();
 
-            // 3. DB 저장 또는 조회 (비즈니스 로직)
+            // DB 저장 또는 조회 (비즈니스 로직)
             User user = userRepository.findByEmail(email)
                     .orElseGet(() -> userRepository.save(User.builder()
                             .email(email)
@@ -63,7 +63,7 @@ public class AuthService {
                             .role(Role.GUEST)
                             .build()));
 
-            // 4. 앱으로 내려줄 응답 생성 (토큰 + Role)
+            // 앱으로 내려줄 응답 생성 (토큰 + Role)
             String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
             
@@ -106,12 +106,17 @@ public class AuthService {
             throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
         }
 
-        // 새로운 Access Token 생성 (Refresh Token은 재사용)
+        // 새로운 Access Token과 Refresh Token 생성 (Token Rotation)
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        
+        // 새로운 Refresh Token을 해시화하여 DB에 저장 (기존 토큰 무효화)
+        String hashedNewRefreshToken = passwordEncoder.encode(newRefreshToken);
+        user.updateRefreshToken(hashedNewRefreshToken);
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(refreshToken) // 기존 Refresh Token 그대로 반환
+                .refreshToken(newRefreshToken) // 새로운 Refresh Token 반환
                 .build();
     }
 }
