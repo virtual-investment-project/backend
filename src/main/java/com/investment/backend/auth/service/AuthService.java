@@ -4,6 +4,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.investment.backend.account.entity.Account;
+import com.investment.backend.account.repository.AccountRepository;
 import com.investment.backend.jwt.util.JwtTokenProvider;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.enums.Role;
@@ -26,6 +28,7 @@ import java.util.Map;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
@@ -35,7 +38,8 @@ public class AuthService {
     public Map<String, Object> googleLogin(String idTokenString) {
         try {
             // 1. 구글 토큰 검증
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),
+                    new GsonFactory())
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
@@ -52,6 +56,8 @@ public class AuthService {
             String socialId = payload.getSubject();
 
             // 3. DB 저장 또는 조회 (비즈니스 로직)
+            boolean isNewUser = userRepository.findByEmail(email).isEmpty();
+
             User user = userRepository.findByEmail(email)
                     .orElseGet(() -> userRepository.save(User.builder()
                             .email(email)
@@ -60,6 +66,12 @@ public class AuthService {
                             .socialId(socialId)
                             .role(Role.GUEST)
                             .build()));
+
+            // 4. 신규 유저인 경우 개인 계좌 자동 생성
+            if (isNewUser) {
+                Account personalAccount = Account.createPersonalAccount(user);
+                accountRepository.save(personalAccount);
+            }
 
             // 4. 앱으로 내려줄 응답 생성 (토큰 + Role)
             String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
