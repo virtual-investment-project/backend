@@ -1,5 +1,7 @@
 package com.investment.backend.team.service;
 
+import com.investment.backend.account.entity.Account;
+import com.investment.backend.account.repository.AccountRepository;
 import com.investment.backend.battle.entity.Battle;
 import com.investment.backend.battle.repository.BattleRepository;
 import com.investment.backend.team.dto.CreateTeamRequest;
@@ -29,6 +31,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamUserRepository teamUserRepository;
     private final BattleRepository battleRepository;
+    private final AccountRepository accountRepository;
     private final Random random = new Random();
 
     /**
@@ -67,6 +70,11 @@ public class TeamService {
                 .role(TeamUserRole.LEADER)
                 .build();
         teamUserRepository.save(teamUser);
+
+        // 배틀 계좌 자동 생성
+        Account battleAccount = Account.createBattleAccount(
+                user, savedTeam, battle, (long) battle.getInitialCapital());
+        accountRepository.save(battleAccount);
 
         return TeamResponse.from(savedTeam, 1);
     }
@@ -115,6 +123,11 @@ public class TeamService {
                 .role(TeamUserRole.MEMBER)
                 .build();
         teamUserRepository.save(teamUser);
+
+        // 배틀 계좌 자동 생성
+        Account battleAccount = Account.createBattleAccount(
+                user, team, battle, (long) battle.getInitialCapital());
+        accountRepository.save(battleAccount);
 
         return TeamResponse.from(team, (int) currentMemberCount + 1);
     }
