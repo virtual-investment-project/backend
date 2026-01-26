@@ -1,11 +1,14 @@
 package com.investment.backend.account.service;
 
+import com.investment.backend.account.dto.AccountResponse;
 import com.investment.backend.account.entity.Account;
 import com.investment.backend.account.repository.AccountRepository;
 import com.investment.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,5 +27,17 @@ public class AccountService {
 
         Account personalAccount = Account.createPersonalAccount(user);
         accountRepository.save(personalAccount);
+    }
+
+    public AccountResponse getPersonalAccount(User user) {
+        Account account = accountRepository.findByUserIdAndTeamIsNullAndBattleIsNull(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("개인 계좌가 존재하지 않습니다."));
+        return AccountResponse.from(account);
+    }
+
+    public AccountResponse getBattleAccount(User user, UUID battleId) {
+        Account account = accountRepository.findByUserIdAndBattleId(user.getId(), battleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 배틀의 계좌가 존재하지 않습니다."));
+        return AccountResponse.from(account);
     }
 }
