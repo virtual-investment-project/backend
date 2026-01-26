@@ -1,6 +1,7 @@
 package com.investment.backend.account.repository;
 
 import com.investment.backend.account.entity.Account;
+import com.investment.backend.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -34,5 +35,11 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     /**
      * 특정 배틀의 모든 계좌 조회
      */
+
     List<Account> findByBattleId(UUID battleId);
+
+    /**
+     * 개인 계좌 존재 여부 확인
+     */
+    boolean existsByUserAndTeamIsNullAndBattleIsNull(User user);
 }
