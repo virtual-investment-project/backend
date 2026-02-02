@@ -29,7 +29,7 @@ public class StockHoldingsService {
     }
 
     
-    // 매수 후 보유 자산 업데이트
+    // 매수 후 보유 자산(평균가) 업데이트
     @Transactional
     public void addHoldings(Account account, String stockCode, String stockName,
                            BigDecimal quantity, BigDecimal price) {
@@ -54,7 +54,7 @@ public class StockHoldingsService {
     }
 
     
-    // 매도 후 보유 자산 업데이트
+    // 매도 후 보유 자산(평균가) 업데이트
     @Transactional
     public void reduceHoldings(UUID accountId, String stockCode, BigDecimal quantity) {
         StockHoldings holdings = stockHoldingsRepository

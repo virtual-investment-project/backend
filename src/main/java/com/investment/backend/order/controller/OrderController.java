@@ -42,4 +42,12 @@ public class OrderController {
         orderService.cancelOrder(orderId);
         return ResponseEntity.ok("주문이 취소되었습니다.");
     }
+
+    
+    // 주문 수동 체결, 테스트용
+    @PostMapping("/{orderId}/fill")
+    public ResponseEntity<String> fillOrder(@PathVariable UUID orderId) {
+        orderService.fillOrder(orderId);
+        return ResponseEntity.ok("주문이 체결되었습니다.");
+    }
 }

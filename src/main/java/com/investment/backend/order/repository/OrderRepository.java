@@ -18,6 +18,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByAccountIdAndStatus(UUID accountId, OrderStatus status);
 
     
-    // 대기 중인 모든 주문 조회 (주문 매칭용)
+    // 특정 상태의 모든 주문 조회
     List<Order> findByStatus(OrderStatus status);
 }
