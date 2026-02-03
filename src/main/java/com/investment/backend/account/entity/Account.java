@@ -104,4 +104,40 @@ public class Account {
     public void updateTotalAsset(Long newTotalAsset) {
         this.totalAsset = newTotalAsset;
     }
+
+    /**
+     * 거래 가능 여부 확인
+     * - 개인 계좌는 항상 거래 가능
+     * - 배틀 계좌는 배틀의 거래 가능 시간에만 거래 가능
+     */
+    public boolean isTradingAllowed() {
+        // 개인 계좌는 항상 거래 가능
+        if (battle == null) {
+            return true;
+        }
+        
+        // 배틀 계좌는 배틀의 거래 가능 시간 확인
+        return battle.isTradingAllowed();
+    }
+
+    /**
+     * 거래 가능 여부를 검증하고, 불가능하면 예외를 발생시킴
+     */
+    public void validateTradingAllowed() {
+        if (!isTradingAllowed()) {
+            if (battle != null) {
+                LocalDateTime now = LocalDateTime.now();
+                if (now.isBefore(battle.getStartAt())) {
+                    throw new IllegalStateException(
+                        "배틀이 아직 시작되지 않았습니다. 시작 시간: " + battle.getStartAt()
+                    );
+                } else {
+                    throw new IllegalStateException(
+                        "배틀이 종료되었습니다. 종료 시간: " + battle.getEndAt()
+                    );
+                }
+            }
+            throw new IllegalStateException("거래가 불가능합니다.");
+        }
+    }
 }
