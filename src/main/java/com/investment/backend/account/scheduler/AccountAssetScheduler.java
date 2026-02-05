@@ -29,7 +29,7 @@ public class AccountAssetScheduler {
 
     
     // 1분마다 모든 계좌의 총 자산 업데이트 (배치 최적화)
-    @Scheduled(fixedRate = 60000)  // 60초(1분)마다 실행
+    @Scheduled(fixedRate = 1000)  // 1초 마다 실행
     public void updateAllAccountAssets() {
         try {
             // 모든 계좌 조회
