@@ -2,10 +2,8 @@ package com.investment.backend.order.service;
 
 import com.investment.backend.account.entity.Account;
 import com.investment.backend.account.repository.AccountRepository;
-import com.investment.backend.external.binance.BinanceApiService;
 import com.investment.backend.history.enums.TradeType;
 import com.investment.backend.history.service.AccountHistoryService;
-import com.investment.backend.holdings.dto.StockHoldingsResponse;
 import com.investment.backend.holdings.service.StockHoldingsService;
 import com.investment.backend.order.dto.CreateOrderRequest;
 import com.investment.backend.order.dto.OrderResponse;
@@ -32,7 +30,6 @@ public class OrderService {
     private final AccountRepository accountRepository;
     private final StockHoldingsService stockHoldingsService;
     private final AccountHistoryService accountHistoryService;
-    private final BinanceApiService binanceApiService;
 
     
     // 주문 생성
@@ -149,42 +146,6 @@ public class OrderService {
         // 주문 상태 변경
         order.fillOrder();
 
-        // 총 자산 업데이트
-        updateTotalAsset(account);
-    }
-
-    
-    // 계좌의 총 자산 업데이트
-    // 총 자산 = 잔액 + 보유 주식의 현재 평가액
-    private void updateTotalAsset(Account account) {
-        try {
-            // 현재 잔액
-            long totalAsset = account.getBalance();
-
-            // 보유 주식 목록 조회
-            List<StockHoldingsResponse> holdings = stockHoldingsService.getHoldingsByAccount(account.getId());
-
-            // 각 보유 주식의 현재 평가액 계산
-            for (StockHoldingsResponse holding : holdings) {
-                BigDecimal currentPrice = binanceApiService.getCurrentPrice(holding.getStockCode());
-                
-                if (currentPrice != null) {
-                    BigDecimal stockValue = currentPrice.multiply(holding.getQuantity());
-                    totalAsset += stockValue.longValue();
-                } else {
-                    // 가격 조회 실패 시 평균 매수가로 계산
-                    log.warn("가격 조회 실패, 평균 매수가 사용 - 심볼: {}", holding.getStockCode());
-                    BigDecimal stockValue = holding.getAveragePrice().multiply(holding.getQuantity());
-                    totalAsset += stockValue.longValue();
-                }
-            }
-
-            // 총 자산 업데이트
-            account.updateTotalAsset(totalAsset);
-            log.debug("총 자산 업데이트 완료 - 계좌 ID: {}, 총 자산: {}", account.getId(), totalAsset);
-            
-        } catch (Exception e) {
-            log.error("총 자산 업데이트 실패 - 계좌 ID: {}, 에러: {}", account.getId(), e.getMessage());
-        }
+        // 총 자산은 별도 스케줄러에서 주기적으로 업데이트됨
     }
 }

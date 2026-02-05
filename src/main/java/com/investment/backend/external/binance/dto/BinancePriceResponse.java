@@ -11,6 +11,9 @@ public class BinancePriceResponse {
     @JsonProperty("symbol")
     private String symbol;
     
+    @JsonProperty("price")  // /api/v3/ticker/price API용
+    private BigDecimal price;
+    
     @JsonProperty("priceChange")
     private BigDecimal priceChange;
     
