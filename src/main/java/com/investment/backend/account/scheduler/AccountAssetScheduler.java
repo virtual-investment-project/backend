@@ -28,7 +28,7 @@ public class AccountAssetScheduler {
     private final BinanceApiService binanceApiService;
 
     
-    // 1분마다 모든 계좌의 총 자산 업데이트 (배치 최적화)
+    // 1초마다 모든 계좌의 총 자산 업데이트 
     @Scheduled(fixedRate = 1000)  // 1초 마다 실행
     public void updateAllAccountAssets() {
         try {
