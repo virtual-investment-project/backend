@@ -86,4 +86,21 @@ public class Battle {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    /**
+     * 거래 가능 여부 확인
+     * - startAt과 endAt이 같으면 24시간 거래 가능
+     * - startAt 이후 && endAt 이전이면 거래 가능
+     */
+    public boolean isTradingAllowed() {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // startAt과 endAt이 같으면 24시간 거래 가능
+        if (startAt.equals(endAt)) {
+            return true;
+        }
+        
+        // startAt 이후이고 endAt 이전이면 거래 가능
+        return !now.isBefore(startAt) && now.isBefore(endAt);
+    }
 }
