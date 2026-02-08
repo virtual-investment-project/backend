@@ -1,7 +1,18 @@
-FROM gradle:8.5-jdk17 AS build
+FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /app
-COPY . .
-RUN gradle build -x test --no-daemon
+
+# Gradle Wrapper 복사 및 권한 설정
+COPY gradlew ./
+COPY gradle ./gradle
+RUN chmod +x gradlew
+
+# 의존성 파일만 먼저 복사하여 의존성 캐싱
+COPY build.gradle settings.gradle ./
+RUN ./gradlew dependencies --no-daemon || true
+
+# 소스 코드 복사 및 빌드
+COPY src ./src
+RUN ./gradlew build -x test --no-daemon
 
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
