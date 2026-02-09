@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -37,9 +40,30 @@ public class OrderScheduler {
             
             log.info("자동 체결 스케줄러 실행 - 대기 주문: {}개", pendingOrders.size());
             
+            // 1. 유니크한 심볼 목록 추출
+            Set<String> uniqueSymbols = pendingOrders.stream()
+                    .map(Order::getStockCode)
+                    .collect(Collectors.toSet());
+            
+            log.debug("심볼 종류: {}개 - {}", uniqueSymbols.size(), uniqueSymbols);
+            
+            // 2. 배치로 모든 심볼의 가격을 한 번에 조회
+            Map<String, BigDecimal> priceMap = binanceApiService.getCurrentPrices(uniqueSymbols);
+            
+            if (priceMap.isEmpty()) {
+                log.warn("가격 조회 실패 - 조회된 가격 정보가 없습니다.");
+                return;
+            }
+            
+            // 3. 각 주문에 대해 조회한 가격으로 체결 조건 확인
             for (Order order : pendingOrders) {
                 try {
-                    processOrder(order);
+                    BigDecimal currentPrice = priceMap.get(order.getStockCode());
+                    if (currentPrice != null) {
+                        processOrder(order, currentPrice);
+                    } else {
+                        log.warn("가격 조회 실패 - 주문 ID: {}, 심볼: {}", order.getId(), order.getStockCode());
+                    }
                 } catch (Exception e) {
                     log.error("주문 처리 실패 - 주문 ID: {}, 에러: {}", order.getId(), e.getMessage());
                 }
@@ -51,15 +75,8 @@ public class OrderScheduler {
     }
 
     
-    // 개별 주문 처리
-    private void processOrder(Order order) {
-        // 바이낸스에서 현재가 조회
-        BigDecimal currentPrice = binanceApiService.getCurrentPrice(order.getStockCode());
-        
-        if (currentPrice == null) {
-            log.warn("가격 조회 실패 - 주문 ID: {}, 심볼: {}", order.getId(), order.getStockCode());
-            return;
-        }
+    // 개별 주문 처리 (현재가를 파라미터로 받음)
+    private void processOrder(Order order, BigDecimal currentPrice) {
         
         // 체결 조건 확인
         boolean shouldFill = false;

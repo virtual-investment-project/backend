@@ -3,7 +3,6 @@ package com.investment.backend.battle.dto;
 import com.investment.backend.battle.enums.BattleType;
 import com.investment.backend.battle.enums.MetricType;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -18,6 +18,7 @@ public class StockHoldingsResponse {
     private String stockName;
     private BigDecimal quantity;
     private BigDecimal averagePrice;
+    private BigDecimal currentPrice;
     private LocalDateTime updatedAt;
 
     public static StockHoldingsResponse from(StockHoldings holdings) {
@@ -28,6 +29,7 @@ public class StockHoldingsResponse {
                 .stockName(holdings.getStockName())
                 .quantity(holdings.getQuantity())
                 .averagePrice(holdings.getAveragePrice())
+                .currentPrice(holdings.getCurrentPrice())
                 .updatedAt(holdings.getUpdatedAt())
                 .build();
     }
