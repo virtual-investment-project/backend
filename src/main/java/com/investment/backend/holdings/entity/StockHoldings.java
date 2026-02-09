@@ -36,6 +36,9 @@ public class StockHoldings {
     @Column(nullable = false, precision = 20, scale = 8)
     private BigDecimal averagePrice;
 
+    @Column(precision = 20, scale = 8)
+    private BigDecimal currentPrice;
+
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
@@ -74,5 +77,12 @@ public class StockHoldings {
     // 보유 수량이 0인지 확인
     public boolean isEmpty() {
         return this.quantity.compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    
+    // 현재가 업데이트
+    public void updateCurrentPrice(BigDecimal currentPrice) {
+        this.currentPrice = currentPrice;
+        this.updatedAt = LocalDateTime.now();
     }
 }

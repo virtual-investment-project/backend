@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,23 +50,18 @@ class AccountServiceTest {
     }
 
     @Test
-    @DisplayName("총 자산 업데이트 (가격 맵 제공)")
-    void updateTotalAsset_WithPriceMap() {
+    @DisplayName("총 자산 업데이트 (DB의 currentPrice 사용)")
+    void updateTotalAsset_WithCurrentPrice() {
         // given
         List<StockHoldingsResponse> holdings = List.of(
-                createHoldingsResponse("BTC/USDT", new BigDecimal("0.5"), new BigDecimal("50000")),
-                createHoldingsResponse("ETH/USDT", new BigDecimal("2"), new BigDecimal("3000"))
-        );
-        
-        Map<String, BigDecimal> priceMap = Map.of(
-                "BTC/USDT", new BigDecimal("60000"),
-                "ETH/USDT", new BigDecimal("3500")
+                createHoldingsResponse("BTC/USDT", new BigDecimal("0.5"), new BigDecimal("50000"), new BigDecimal("60000")),
+                createHoldingsResponse("ETH/USDT", new BigDecimal("2"), new BigDecimal("3000"), new BigDecimal("3500"))
         );
         
         when(stockHoldingsService.getHoldingsByAccount(testAccountId)).thenReturn(holdings);
 
         // when
-        accountService.updateTotalAsset(testAccount, priceMap);
+        accountService.updateTotalAsset(testAccount);
 
         // then
         // 잔액: 1,000,000
@@ -75,58 +69,50 @@ class AccountServiceTest {
         // ETH: 2 * 3,500 = 7,000
         // 총 자산: 1,037,000
         assertThat(testAccount.getTotalAsset()).isEqualTo(1037000L);
-        verify(binanceApiService, never()).getCurrentPrices(any());  // API 호출 없음
     }
 
     @Test
     @DisplayName("총 자산 업데이트, 보유 주식 없음")
-    void updateTotalAsset_WithPriceMap_NoHoldings() {
+    void updateTotalAsset_NoHoldings() {
         // given
-        Map<String, BigDecimal> priceMap = Map.of("BTC/USDT", new BigDecimal("60000"));
-        
         when(stockHoldingsService.getHoldingsByAccount(testAccountId))
                 .thenReturn(Collections.emptyList());
 
         // when
-        accountService.updateTotalAsset(testAccount, priceMap);
+        accountService.updateTotalAsset(testAccount);
 
         // then
         assertThat(testAccount.getTotalAsset()).isEqualTo(1000000L);
-        verify(binanceApiService, never()).getCurrentPrices(any());
     }
 
     @Test
-    @DisplayName("총 자산 업데이트, 가격 맵에 일부 심볼 누락")
-    void updateTotalAsset_WithPriceMap_PartialMissing() {
+    @DisplayName("총 자산 업데이트, currentPrice 없을 때 averagePrice 사용")
+    void updateTotalAsset_FallbackToAveragePrice() {
         // given
         List<StockHoldingsResponse> holdings = List.of(
-                createHoldingsResponse("BTC/USDT", new BigDecimal("0.5"), new BigDecimal("50000")),
-                createHoldingsResponse("ETH/USDT", new BigDecimal("2"), new BigDecimal("3000"))
+                createHoldingsResponse("BTC/USDT", new BigDecimal("0.5"), new BigDecimal("50000"), new BigDecimal("60000")),
+                createHoldingsResponse("ETH/USDT", new BigDecimal("2"), new BigDecimal("3000"), null)  // currentPrice 없음
         );
-        
-        // BTC만 가격 맵에 있음
-        Map<String, BigDecimal> priceMap = Map.of("BTC/USDT", new BigDecimal("60000"));
         
         when(stockHoldingsService.getHoldingsByAccount(testAccountId)).thenReturn(holdings);
 
         // when
-        accountService.updateTotalAsset(testAccount, priceMap);
+        accountService.updateTotalAsset(testAccount);
 
         // then
         // 잔액: 1,000,000
-        // BTC: 0.5 * 60,000 = 30,000 (가격 맵)
-        // ETH: 2 * 3,000 = 6,000 (평균 매수가)
+        // BTC: 0.5 * 60,000 = 30,000 (currentPrice)
+        // ETH: 2 * 3,000 = 6,000 (averagePrice 사용)
         // 총 자산: 1,036,000
         assertThat(testAccount.getTotalAsset()).isEqualTo(1036000L);
-        verify(binanceApiService, never()).getCurrentPrices(any());
     }
 
-    // Helper method
-    private StockHoldingsResponse createHoldingsResponse(String stockCode, BigDecimal quantity, BigDecimal averagePrice) {
+    private StockHoldingsResponse createHoldingsResponse(String stockCode, BigDecimal quantity, BigDecimal averagePrice, BigDecimal currentPrice) {
         return StockHoldingsResponse.builder()
                 .stockCode(stockCode)
                 .quantity(quantity)
                 .averagePrice(averagePrice)
+                .currentPrice(currentPrice)
                 .build();
     }
 }

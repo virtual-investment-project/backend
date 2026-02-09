@@ -28,7 +28,7 @@ public class AccountAssetScheduler {
     private final BinanceApiService binanceApiService;
 
     
-    // 1초마다 모든 계좌의 총 자산 업데이트 
+    // 1초마다 보유 종목 가격 업데이트 후 모든 계좌의 총 자산 업데이트 
     @Scheduled(fixedRate = 1000)  // 1초 마다 실행
     public void updateAllAccountAssets() {
         try {
@@ -77,13 +77,16 @@ public class AccountAssetScheduler {
             
             log.info("배치 가격 조회 완료 - 조회 성공: {}개", priceMap.size());
             
-            // 3. 조회한 가격으로 각 계좌의 총 자산을 독립적으로 업데이트
+            // 3. 보유 종목들의 currentPrice를 DB에 업데이트
+            stockHoldingsService.updateCurrentPrices(priceMap);
+            
+            // 4. 각 계좌의 총 자산을 업데이트 (DB의 currentPrice 사용)
             int successCount = 0;
             int failCount = 0;
             
             for (Account account : accounts) {
                 try {
-                    accountService.updateTotalAsset(account, priceMap);
+                    accountService.updateTotalAsset(account);
                     successCount++;
                 } catch (Exception e) {
                     log.error("계좌 총 자산 업데이트 실패 - 계좌 ID: {}, 에러: {}", account.getId(), e.getMessage());
@@ -98,3 +101,4 @@ public class AccountAssetScheduler {
         }
     }
 }
+

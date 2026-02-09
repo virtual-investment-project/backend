@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -49,10 +48,9 @@ public class AccountService {
         return AccountResponse.from(account);
     }
     
-    // 계좌의 총 자산 업데이트 (이미 조회된 가격 맵 사용)
-    // 배치 조회 최적화를 위해 스케줄러에서 호출
+    // 계좌의 총 자산 업데이트 (DB에 저장된 currentPrice 사용)
     @Transactional
-    public void updateTotalAsset(Account account, Map<String, BigDecimal> priceMap) {
+    public void updateTotalAsset(Account account) {
         try {
             // 현재 잔액
             long totalAsset = account.getBalance();
@@ -69,17 +67,13 @@ public class AccountService {
 
             // 각 보유 주식의 현재 평가액 계산
             for (StockHoldingsResponse holding : holdings) {
-                BigDecimal currentPrice = priceMap.get(holding.getStockCode());
+                // DB에 저장된 currentPrice 사용 (없으면 averagePrice 사용)
+                BigDecimal priceToUse = holding.getCurrentPrice() != null 
+                        ? holding.getCurrentPrice() 
+                        : holding.getAveragePrice();
                 
-                if (currentPrice != null) {
-                    BigDecimal stockValue = currentPrice.multiply(holding.getQuantity());
-                    totalAsset += stockValue.longValue();
-                } else {
-                    // 가격 조회 실패 시 평균 매수가로 계산
-                    log.warn("가격 조회 실패, 평균 매수가 사용 - 심볼: {}", holding.getStockCode());
-                    BigDecimal stockValue = holding.getAveragePrice().multiply(holding.getQuantity());
-                    totalAsset += stockValue.longValue();
-                }
+                BigDecimal stockValue = priceToUse.multiply(holding.getQuantity());
+                totalAsset += stockValue.longValue();
             }
 
             // 총 자산 업데이트
@@ -91,3 +85,4 @@ public class AccountService {
         }
     }
 }
+

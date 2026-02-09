@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -219,5 +220,81 @@ class StockHoldingsServiceTest {
 
         // then
         assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("보유 종목 현재가 배치 업데이트")
+    void updateCurrentPrices_Success() {
+        // given
+        StockHoldings btcHoldings = StockHoldings.builder()
+                .account(testAccount)
+                .stockCode("BTCUSDT")
+                .stockName("Bitcoin")
+                .quantity(new BigDecimal("0.5"))
+                .averagePrice(new BigDecimal("50000"))
+                .build();
+
+        StockHoldings ethHoldings = StockHoldings.builder()
+                .account(testAccount)
+                .stockCode("ETHUSDT")
+                .stockName("Ethereum")
+                .quantity(new BigDecimal("2"))
+                .averagePrice(new BigDecimal("3000"))
+                .build();
+
+        List<StockHoldings> allHoldings = List.of(btcHoldings, ethHoldings);
+
+        Map<String, BigDecimal> priceMap = Map.of(
+                "BTCUSDT", new BigDecimal("60000"),
+                "ETHUSDT", new BigDecimal("3500")
+        );
+
+        when(stockHoldingsRepository.findAll()).thenReturn(allHoldings);
+
+        // when
+        stockHoldingsService.updateCurrentPrices(priceMap);
+
+        // then
+        assertThat(btcHoldings.getCurrentPrice()).isEqualByComparingTo(new BigDecimal("60000"));
+        assertThat(ethHoldings.getCurrentPrice()).isEqualByComparingTo(new BigDecimal("3500"));
+    }
+
+    @Test
+    @DisplayName("보유 종목 현재가 배치 업데이트 - 일부 가격 누락")
+    void updateCurrentPrices_PartialPrices() {
+        // given
+        StockHoldings btcHoldings = StockHoldings.builder()
+                .account(testAccount)
+                .stockCode("BTCUSDT")
+                .stockName("Bitcoin")
+                .quantity(new BigDecimal("0.5"))
+                .averagePrice(new BigDecimal("50000"))
+                .build();
+
+        List<StockHoldings> allHoldings = List.of(btcHoldings);
+
+        // BTC 가격만 제공 (다른 종목 가격 없음)
+        Map<String, BigDecimal> priceMap = Map.of("BTCUSDT", new BigDecimal("60000"));
+
+        when(stockHoldingsRepository.findAll()).thenReturn(allHoldings);
+
+        // when
+        stockHoldingsService.updateCurrentPrices(priceMap);
+
+        // then
+        assertThat(btcHoldings.getCurrentPrice()).isEqualByComparingTo(new BigDecimal("60000"));
+    }
+
+    @Test
+    @DisplayName("보유 종목 현재가 배치 업데이트 - 빈 가격 맵")
+    void updateCurrentPrices_EmptyPriceMap() {
+        // given
+        Map<String, BigDecimal> emptyPriceMap = Map.of();
+
+        // when
+        stockHoldingsService.updateCurrentPrices(emptyPriceMap);
+
+        // then
+        verify(stockHoldingsRepository, never()).findAll();
     }
 }
