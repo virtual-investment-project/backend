@@ -5,13 +5,16 @@ import com.investment.backend.holdings.dto.StockHoldingsResponse;
 import com.investment.backend.holdings.entity.StockHoldings;
 import com.investment.backend.holdings.repository.StockHoldingsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -76,4 +79,30 @@ public class StockHoldingsService {
                 .map(holdings -> holdings.getQuantity().compareTo(quantity) >= 0)
                 .orElse(false);
     }
+
+    
+    // 보유 종목들의 현재가 배치 업데이트
+    @Transactional
+    public void updateCurrentPrices(Map<String, BigDecimal> priceMap) {
+        if (priceMap == null || priceMap.isEmpty()) {
+            return;
+        }
+
+        // 모든 보유 종목 조회
+        List<StockHoldings> allHoldings = stockHoldingsRepository.findAll();
+        
+        int updatedCount = 0;
+        for (StockHoldings holdings : allHoldings) {
+            BigDecimal currentPrice = priceMap.get(holdings.getStockCode());
+            if (currentPrice != null) {
+                holdings.updateCurrentPrice(currentPrice);
+                updatedCount++;
+            }
+        }
+        
+        if (updatedCount > 0) {
+            log.debug("보유 종목 현재가 업데이트 완료 - {}개 종목", updatedCount);
+        }
+    }
 }
+
