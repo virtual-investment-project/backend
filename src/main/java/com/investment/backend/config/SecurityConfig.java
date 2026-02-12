@@ -3,6 +3,7 @@ package com.investment.backend.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,8 +35,15 @@ public class SecurityConfig {
 
                 // URL별 권한 관리
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // 이 주소는 누구나 통과 (로그인해야 하니까)
-                        .anyRequest().authenticated() // 나머지는 토큰 필요
+                        // 인증 관련 API (공개)
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // 메인페이지 공개 API (조회만 허용)
+                        .requestMatchers(HttpMethod.GET, "/api/battles", "/api/battles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rankings/**").permitAll()
+                        // 기타 공개 페이지
+                        .requestMatchers("/test", "/login-success").permitAll()
+                        // 나머지는 모두 인증 필요
+                        .anyRequest().authenticated()
                 );
 
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userRepository), UsernamePasswordAuthenticationFilter.class);

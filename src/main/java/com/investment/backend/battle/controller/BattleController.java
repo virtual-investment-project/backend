@@ -3,11 +3,14 @@ package com.investment.backend.battle.controller;
 import com.investment.backend.battle.dto.BattleListResponse;
 import com.investment.backend.battle.dto.BattleResponse;
 import com.investment.backend.battle.dto.CreateBattleRequest;
+import com.investment.backend.battle.enums.BattleStatus;
 import com.investment.backend.battle.service.BattleService;
+import com.investment.backend.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,17 +24,33 @@ public class BattleController {
     private final BattleService battleService;
 
     /**
-     * Battle 목록 조회 (팀 수익률 요약 포함)
+     * Battle 목록 조회 (선택적 상태 필터 + limit)
+     * - status 파라미터 없으면 전체 조회
+     * - status=YET: 참여 가능한 배틀
+     * - status=PROGRESS: 진행중인 배틀
+     * - status=END: 종료된 배틀
+     * - limit: 최대 조회 개수 (기본값: 10, 범위: 1-100)
      */
     @GetMapping
-    public ResponseEntity<List<BattleListResponse>> getAllBattles() {
-        List<BattleListResponse> battles = battleService.getAllBattles();
+    public ResponseEntity<List<BattleListResponse>> getBattles(
+            @RequestParam(required = false) BattleStatus status,
+            @RequestParam(defaultValue = "10") int limit) {
+        List<BattleListResponse> battles;
+        
+        if (status != null) {
+            battles = battleService.getBattlesByStatus(status, limit);
+        } else {
+            battles = battleService.getAllBattles();
+        }
+        
         return ResponseEntity.ok(battles);
     }
 
     @PostMapping
-    public ResponseEntity<BattleResponse> createBattle(@Valid @RequestBody CreateBattleRequest request) {
-        BattleResponse response = battleService.createBattle(request);
+    public ResponseEntity<BattleResponse> createBattle(
+            @Valid @RequestBody CreateBattleRequest request,
+            @AuthenticationPrincipal User user) {
+        BattleResponse response = battleService.createBattle(request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

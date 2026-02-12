@@ -42,4 +42,9 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
      * 개인 계좌 존재 여부 확인
      */
     boolean existsByUserAndTeamIsNullAndBattleIsNull(User user);
+
+    /**
+     * 모든 개인 계좌 조회 (team_id, battle_id = NULL)
+     */
+    List<Account> findByTeamIsNullAndBattleIsNull();
 }

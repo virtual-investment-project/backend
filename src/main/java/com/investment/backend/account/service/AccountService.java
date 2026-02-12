@@ -1,6 +1,7 @@
 package com.investment.backend.account.service;
 
 import com.investment.backend.account.dto.AccountResponse;
+import com.investment.backend.account.dto.AccountRankingResponse;
 import com.investment.backend.account.entity.Account;
 import com.investment.backend.account.repository.AccountRepository;
 import com.investment.backend.holdings.dto.StockHoldingsResponse;
@@ -47,6 +48,16 @@ public class AccountService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 배틀의 계좌가 존재하지 않습니다."));
         return AccountResponse.from(account);
     }
+
+    /**
+     * 개인 계좌 수익률 상위 랭킹 조회
+     */
+    public List<AccountRankingResponse> getTopAccountsByReturnRate(int limit) {
+        return accountRepository.findByTeamIsNullAndBattleIsNull().stream()
+                .map(AccountRankingResponse::from)
+                .sorted((a, b) -> Double.compare(b.getReturnRate(), a.getReturnRate()))
+                .limit(limit)
+                .toList();
     
     // 계좌의 총 자산 업데이트 (DB에 저장된 currentPrice 사용)
     @Transactional

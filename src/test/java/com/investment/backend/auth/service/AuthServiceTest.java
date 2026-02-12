@@ -98,6 +98,7 @@ class AuthServiceTest {
             assertThat(result.getAccessToken()).isEqualTo(testAccessToken);
             assertThat(result.getRefreshToken()).isEqualTo(testRefreshToken);
             assertThat(result.getRole()).isEqualTo("GUEST");
+            assertThat(result.isNewUser()).isTrue();
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository).save(any(User.class));
@@ -152,6 +153,7 @@ class AuthServiceTest {
             assertThat(result.getAccessToken()).isEqualTo(testAccessToken);
             assertThat(result.getRefreshToken()).isEqualTo(testRefreshToken);
             assertThat(result.getRole()).isEqualTo("USER");
+            assertThat(result.isNewUser()).isFalse();
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository, never()).save(any(User.class)); // 기존 사용자이므로 저장 X
