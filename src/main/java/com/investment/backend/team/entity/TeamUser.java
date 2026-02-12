@@ -33,7 +33,7 @@ public class TeamUser {
     @Column(nullable = false)
     private TeamUserRole role;
 
-    @Column(nullable = false)
+    @Column(name = "`rank`", nullable = false)
     private Integer rank;
 
     @Column(nullable = false)

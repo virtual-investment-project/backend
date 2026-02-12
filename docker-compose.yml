@@ -9,6 +9,8 @@ services:
     ports:
       - "3306:3306"
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -34,9 +36,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: rootpassword
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
+
+volumes:
+  mysql-data:

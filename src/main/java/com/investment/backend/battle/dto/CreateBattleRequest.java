@@ -38,4 +38,6 @@ public class CreateBattleRequest {
     private Integer memberCount;
 
     private Integer teamCount; // 팀 수 제한 (기본값: 2)
+
+    private String teamName; // 생성자의 팀 이름 (선택, 미입력시 "OOO의 팀")
 }

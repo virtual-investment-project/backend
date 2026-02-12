@@ -53,14 +53,19 @@ public class AuthService {
             String socialId = payload.getSubject();
 
             // DB 저장 또는 조회 (비즈니스 로직)
-            User user = userRepository.findByEmail(email)
-                    .orElseGet(() -> userRepository.save(User.builder()
-                            .email(email)
-                            .name(name)
-                            .socialType(SocialType.GOOGLE)
-                            .socialId(socialId)
-                            .role(Role.GUEST)
-                            .build()));
+            boolean isNewUser = false;
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                isNewUser = true;
+                user = userRepository.save(User.builder()
+                        .email(email)
+                        .name(name)
+                        .socialType(SocialType.GOOGLE)
+                        .socialId(socialId)
+                        .role(Role.GUEST)
+                        .build());
+            }
 
             // 앱으로 내려줄 응답 생성 (토큰 + Role)
             String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
@@ -74,6 +79,7 @@ public class AuthService {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .role(user.getRole().name())
+                    .isNewUser(isNewUser)
                     .build();
 
         } catch (Exception e) {
