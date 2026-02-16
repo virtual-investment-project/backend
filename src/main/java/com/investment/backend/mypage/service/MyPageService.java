@@ -36,14 +36,33 @@ public class MyPageService {
     public SettingsResponse getSettings(User user) {
         return SettingsResponse.builder()
                 .darkMode(user.getDarkMode())
+                .orderExecution(user.getOrderExecution())
+                .battleStart(user.getBattleStart())
+                .rankChange(user.getRankChange())
+                .profitRate(user.getProfitRate())
+                .pushNotification(user.getPushNotification())
+                .dailySummary(user.getDailySummary())
+                .stockPriceAlert(user.getStockPriceAlert())
                 .build();
     }
 
     public SettingsResponse updateSettings(User user, SettingsUpdateRequest request) {
+        // 다크모드 설정
         if (request.getDarkMode() != null) {
             user.updateDarkMode(request.getDarkMode());
-            userRepository.save(user);
         }
+
+        // 알림 설정
+        user.updateNotificationSettings(
+                request.getOrderExecution(),
+                request.getBattleStart(),
+                request.getRankChange(),
+                request.getProfitRate(),
+                request.getPushNotification(),
+                request.getDailySummary(),
+                request.getStockPriceAlert());
+
+        userRepository.save(user);
         return getSettings(user);
     }
 }

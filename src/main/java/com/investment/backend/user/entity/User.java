@@ -33,9 +33,31 @@ public class User {
 
     private String company;
 
-    // 설정
+    // 테마 설정
     @Column(nullable = false)
     private Boolean darkMode = false;
+
+    // 알림 설정
+    @Column(nullable = false)
+    private Boolean orderExecution = true;
+
+    @Column(nullable = false)
+    private Boolean battleStart = true;
+
+    @Column(nullable = false)
+    private Boolean rankChange = true;
+
+    @Column(nullable = false)
+    private Boolean profitRate = true;
+
+    @Column(nullable = false)
+    private Boolean pushNotification = true;
+
+    @Column(nullable = false)
+    private Boolean dailySummary = false;
+
+    @Column(nullable = false)
+    private Boolean stockPriceAlert = false;
 
     @Enumerated(EnumType.STRING)
     private SocialType socialType;
@@ -87,5 +109,29 @@ public class User {
 
     public void updateDarkMode(Boolean darkMode) {
         this.darkMode = darkMode;
+    }
+
+    public void updateNotificationSettings(
+            Boolean orderExecution,
+            Boolean battleStart,
+            Boolean rankChange,
+            Boolean profitRate,
+            Boolean pushNotification,
+            Boolean dailySummary,
+            Boolean stockPriceAlert) {
+        if (orderExecution != null)
+            this.orderExecution = orderExecution;
+        if (battleStart != null)
+            this.battleStart = battleStart;
+        if (rankChange != null)
+            this.rankChange = rankChange;
+        if (profitRate != null)
+            this.profitRate = profitRate;
+        if (pushNotification != null)
+            this.pushNotification = pushNotification;
+        if (dailySummary != null)
+            this.dailySummary = dailySummary;
+        if (stockPriceAlert != null)
+            this.stockPriceAlert = stockPriceAlert;
     }
 }
