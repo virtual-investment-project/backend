@@ -1,4 +1,4 @@
-package com.investment.backend.mypage.profile.dto;
+package com.investment.backend.mypage.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

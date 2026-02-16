@@ -1,4 +1,4 @@
-package com.investment.backend.mypage.profile.dto;
+package com.investment.backend.mypage.dto;
 
 import com.investment.backend.user.entity.User;
 import lombok.Builder;

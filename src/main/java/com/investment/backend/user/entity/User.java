@@ -33,6 +33,10 @@ public class User {
 
     private String company;
 
+    // 설정
+    @Column(nullable = false)
+    private Boolean darkMode = false;
+
     @Enumerated(EnumType.STRING)
     private SocialType socialType;
 
@@ -79,5 +83,9 @@ public class User {
         if (company != null) {
             this.company = company;
         }
+    }
+
+    public void updateDarkMode(Boolean darkMode) {
+        this.darkMode = darkMode;
     }
 }

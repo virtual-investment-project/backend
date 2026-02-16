@@ -12,7 +12,6 @@ import com.investment.backend.order.enums.OrderStatus;
 import com.investment.backend.order.enums.OrderType;
 import com.investment.backend.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,7 +29,6 @@ public class OrderService {
     private final StockHoldingsService stockHoldingsService;
     private final AccountHistoryService accountHistoryService;
 
-    
     // 주문 생성
     public OrderResponse createOrder(CreateOrderRequest request) {
         Account account = accountRepository.findById(request.getAccountId())
@@ -68,7 +65,6 @@ public class OrderService {
         return OrderResponse.from(savedOrder);
     }
 
-    
     // 계좌별 주문 목록 조회
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByAccount(UUID accountId) {
@@ -78,7 +74,6 @@ public class OrderService {
                 .toList();
     }
 
-    
     // 주문 취소
     public void cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -94,7 +89,6 @@ public class OrderService {
         }
     }
 
-    
     // 주문 체결 처리 (외부 호출용)
     public void fillOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -116,22 +110,19 @@ public class OrderService {
                     order.getStockCode(),
                     order.getStockName(),
                     order.getQuantity(),
-                    orderPrice
-            );
+                    orderPrice);
             // 거래 내역 기록
             accountHistoryService.recordHistory(
                     account,
                     TradeType.BUY,
                     totalAmount,
-                    String.format("%s %s 매수", order.getStockName(), order.getQuantity())
-            );
+                    String.format("%s %s 매수", order.getStockName(), order.getQuantity()));
         } else {
             // 매도 체결
             stockHoldingsService.reduceHoldings(
                     account.getId(),
                     order.getStockCode(),
-                    order.getQuantity()
-            );
+                    order.getQuantity());
             // 잔액 증가
             account.updateBalance(account.getBalance() + totalAmount.longValue());
             // 거래 내역 기록
@@ -139,8 +130,7 @@ public class OrderService {
                     account,
                     TradeType.SELL,
                     totalAmount,
-                    String.format("%s %s 매도", order.getStockName(), order.getQuantity())
-            );
+                    String.format("%s %s 매도", order.getStockName(), order.getQuantity()));
         }
 
         // 주문 상태 변경

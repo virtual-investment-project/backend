@@ -58,7 +58,8 @@ public class AccountService {
                 .sorted((a, b) -> Double.compare(b.getReturnRate(), a.getReturnRate()))
                 .limit(limit)
                 .toList();
-    
+    }
+
     // 계좌의 총 자산 업데이트 (DB에 저장된 currentPrice 사용)
     @Transactional
     public void updateTotalAsset(Account account) {
@@ -79,10 +80,10 @@ public class AccountService {
             // 각 보유 주식의 현재 평가액 계산
             for (StockHoldingsResponse holding : holdings) {
                 // DB에 저장된 currentPrice 사용 (없으면 averagePrice 사용)
-                BigDecimal priceToUse = holding.getCurrentPrice() != null 
-                        ? holding.getCurrentPrice() 
+                BigDecimal priceToUse = holding.getCurrentPrice() != null
+                        ? holding.getCurrentPrice()
                         : holding.getAveragePrice();
-                
+
                 BigDecimal stockValue = priceToUse.multiply(holding.getQuantity());
                 totalAsset += stockValue.longValue();
             }
@@ -90,10 +91,9 @@ public class AccountService {
             // 총 자산 업데이트
             account.updateTotalAsset(totalAsset);
             log.debug("총 자산 업데이트 완료 - 계좌 ID: {}, 총 자산: {}", account.getId(), totalAsset);
-            
+
         } catch (Exception e) {
             log.error("총 자산 업데이트 실패 - 계좌 ID: {}, 에러: {}", account.getId(), e.getMessage());
         }
     }
 }
-

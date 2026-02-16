@@ -1,7 +1,9 @@
-package com.investment.backend.mypage.profile.service;
+package com.investment.backend.mypage.service;
 
-import com.investment.backend.mypage.profile.dto.ProfileResponse;
-import com.investment.backend.mypage.profile.dto.ProfileUpdateRequest;
+import com.investment.backend.mypage.dto.ProfileResponse;
+import com.investment.backend.mypage.dto.ProfileUpdateRequest;
+import com.investment.backend.mypage.dto.SettingsResponse;
+import com.investment.backend.mypage.dto.SettingsUpdateRequest;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +30,20 @@ public class MyPageService {
 
     public void logout(User user) {
         user.updateRefreshToken(null);
+    }
+
+    @Transactional(readOnly = true)
+    public SettingsResponse getSettings(User user) {
+        return SettingsResponse.builder()
+                .darkMode(user.getDarkMode())
+                .build();
+    }
+
+    public SettingsResponse updateSettings(User user, SettingsUpdateRequest request) {
+        if (request.getDarkMode() != null) {
+            user.updateDarkMode(request.getDarkMode());
+            userRepository.save(user);
+        }
+        return getSettings(user);
     }
 }
