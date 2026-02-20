@@ -6,6 +6,8 @@ import com.investment.backend.comment.dto.CommentResponse;
 import com.investment.backend.comment.dto.CreateCommentRequest;
 import com.investment.backend.comment.entity.Comment;
 import com.investment.backend.comment.repository.CommentRepository;
+import com.investment.backend.team.repository.TeamUserRepository;
+import com.investment.backend.team.enums.TeamUserStatus;
 import com.investment.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final BattleRepository battleRepository;
+    private final TeamUserRepository teamUserRepository;
 
     /**
      * 댓글 생성
@@ -30,6 +33,13 @@ public class CommentService {
     public CommentResponse createComment(CreateCommentRequest request, User user) {
         Battle battle = battleRepository.findById(request.getBattleId())
                 .orElseThrow(() -> new IllegalArgumentException("Battle을 찾을 수 없습니다."));
+
+        // 배틀에 참여한 팀의 팀원만 댓글 작성 가능
+        boolean isBattleParticipant = teamUserRepository.existsByTeam_Battle_IdAndUserIdAndStatus(
+                battle.getId(), user.getId(), TeamUserStatus.ACTIVE);
+        if (!isBattleParticipant) {
+            throw new IllegalArgumentException("해당 배틀에 참여한 팀원만 댓글을 작성할 수 있습니다.");
+        }
 
         Comment parent = null;
         if (request.getParentId() != null) {
