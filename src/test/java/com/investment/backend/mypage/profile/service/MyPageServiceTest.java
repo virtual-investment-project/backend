@@ -1,7 +1,8 @@
 package com.investment.backend.mypage.profile.service;
 
-import com.investment.backend.mypage.profile.dto.ProfileResponse;
-import com.investment.backend.mypage.profile.dto.ProfileUpdateRequest;
+import com.investment.backend.mypage.dto.ProfileResponse;
+import com.investment.backend.mypage.dto.ProfileUpdateRequest;
+import com.investment.backend.mypage.service.MyPageService;
 import com.investment.backend.user.entity.User;
 import com.investment.backend.user.enums.Role;
 import com.investment.backend.user.enums.SocialType;
@@ -39,7 +40,7 @@ class MyPageServiceTest {
                 .socialId("google123")
                 .refreshToken("valid-refresh-token")
                 .build();
-        
+
         ReflectionTestUtils.setField(user, "nickname", "투자왕");
         ReflectionTestUtils.setField(user, "school", "서울대학교");
         ReflectionTestUtils.setField(user, "company", "네이버");
@@ -69,7 +70,7 @@ class MyPageServiceTest {
                 .socialId("google123")
                 .refreshToken("valid-refresh-token")
                 .build();
-        
+
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
@@ -85,7 +86,7 @@ class MyPageServiceTest {
         assertThat(user.getCompany()).isEqualTo("라인");
         assertThat(response.getSchool()).isEqualTo("고려대학교");
         assertThat(response.getCompany()).isEqualTo("라인");
-        
+
         verify(userRepository).save(user);
     }
 
@@ -102,7 +103,7 @@ class MyPageServiceTest {
                 .socialId("google123")
                 .refreshToken("valid-refresh-token")
                 .build();
-        
+
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
@@ -118,7 +119,7 @@ class MyPageServiceTest {
         assertThat(user.getCompany()).isEqualTo("카카오"); // 변경되지 않음
         assertThat(response.getSchool()).isEqualTo("서울대학교");
         assertThat(response.getCompany()).isEqualTo("카카오");
-        
+
         verify(userRepository).save(user);
     }
 
@@ -135,7 +136,7 @@ class MyPageServiceTest {
                 .socialId("google123")
                 .refreshToken("valid-refresh-token")
                 .build();
-        
+
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
@@ -151,7 +152,7 @@ class MyPageServiceTest {
         assertThat(user.getCompany()).isEqualTo("네이버");
         assertThat(response.getSchool()).isEqualTo("연세대학교");
         assertThat(response.getCompany()).isEqualTo("네이버");
-        
+
         verify(userRepository).save(user);
     }
 
