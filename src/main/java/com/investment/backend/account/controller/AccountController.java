@@ -4,6 +4,7 @@ import com.investment.backend.account.dto.AccountResponse;
 import com.investment.backend.account.service.AccountService;
 import com.investment.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +29,9 @@ public class AccountController {
     }
 
     @GetMapping("/battle/{battleId}")
-    public AccountResponse getBattleAccount(@AuthenticationPrincipal User user, @PathVariable UUID battleId) {
-        return accountService.getBattleAccount(user, battleId);
+    public ResponseEntity<AccountResponse> getBattleAccount(@AuthenticationPrincipal User user, @PathVariable UUID battleId) {
+        return accountService.getBattleAccount(user, battleId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build()); // 204: 참여하지 않은 경우
     }
 }

@@ -1,12 +1,173 @@
 # REST API 문서
 
-> **⚠️ 중요**: Battle과 Account API는 현재 테스트 모드입니다. 인증 없이 사용 가능하며, Account API는 DB의 첫 번째 사용자를 자동으로 사용합니다.
-
 ## 목차
+- [Auth API](#auth-api)
+- [User API](#user-api)
 - [Battle API](#battle-api)
 - [Account API](#account-api)
 - [Team API](#team-api)
 - [Comment API](#comment-api)
+- [Order API](#order-api)
+- [Rankings API](#rankings-api)
+- [History API](#history-api)
+- [MyPage API](#mypage-api)
+
+---
+
+## Auth API
+
+Base URL: `/api/auth`
+
+> 인증 없이 접근 가능합니다.
+
+### 1. 구글 로그인
+
+구글 ID Token을 사용하여 로그인합니다.
+
+**Endpoint**
+```
+POST /api/auth/google
+```
+
+**Request**
+- 인증: 필요 없음
+- Content-Type: `application/json`
+
+```json
+{
+  "idToken": "구글 ID 토큰"
+}
+```
+
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| idToken | String | Yes | 구글 ID Token |
+
+**Response**
+- Status: `200 OK`
+- Body: `GoogleLoginResponse`
+
+```json
+{
+  "accessToken": "JWT 액세스 토큰",
+  "refreshToken": "JWT 리프레시 토큰",
+  "role": "GUEST",
+  "isNewUser": true
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accessToken | String | JWT 액세스 토큰 |
+| refreshToken | String | JWT 리프레시 토큰 |
+| role | String | 사용자 역할 (GUEST, USER, ADMIN) |
+| isNewUser | Boolean | 신규 사용자 여부 |
+
+**Error Response**
+- `401`: 유효하지 않은 구글 토큰
+- `500`: 서버 내부 오류
+
+---
+
+### 2. 토큰 갱신
+
+리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.
+
+**Endpoint**
+```
+POST /api/auth/refresh
+```
+
+**Request**
+- 인증: 필요 없음
+- Content-Type: `application/json`
+
+```json
+{
+  "refreshToken": "리프레시 토큰"
+}
+```
+
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| refreshToken | String | Yes | 리프레시 토큰 |
+
+**Response**
+- Status: `200 OK`
+- Body: `TokenResponse`
+
+```json
+{
+  "accessToken": "새로운 JWT 액세스 토큰",
+  "refreshToken": "새로운 JWT 리프레시 토큰"
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accessToken | String | 새로운 JWT 액세스 토큰 |
+| refreshToken | String | 새로운 JWT 리프레시 토큰 |
+
+**Error Response**
+- `401`: 유효하지 않은 리프레시 토큰
+- `500`: 서버 내부 오류
+
+---
+
+## User API
+
+Base URL: `/api/users`
+
+### 1. 추가 정보 입력
+
+신규 사용자(GUEST)가 추가 정보를 입력하여 회원 가입을 완료합니다 (GUEST → USER 등업).
+
+**Endpoint**
+```
+POST /api/users/additional-info
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Content-Type: `application/json`
+
+```json
+{
+  "nickname": "닉네임",
+  "age": 25,
+  "school": "학교명",
+  "company": "회사명"
+}
+```
+
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| nickname | String | Yes | 닉네임 |
+| age | Integer | Yes | 나이 (최소 1) |
+| school | String | No | 학교명 |
+| company | String | No | 회사명 |
+
+**Response**
+- Status: `200 OK`
+- Body: `TokenResponse`
+
+```json
+{
+  "accessToken": "새로운 JWT 액세스 토큰",
+  "refreshToken": "새로운 JWT 리프레시 토큰"
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accessToken | String | 새로운 JWT 액세스 토큰 (역할 변경 반영) |
+| refreshToken | String | 새로운 JWT 리프레시 토큰 |
 
 ---
 
@@ -14,11 +175,9 @@
 
 Base URL: `/api/battles`
 
-> **테스트 모드**: 현재 인증 없이 접근 가능합니다.
+### 1. 배틀 목록 조회
 
-### 1. 모든 배틀 목록 조회
-
-팀별 수익률 요약 정보를 포함한 배틀 목록을 조회합니다.
+팀별 수익률 요약 정보를 포함한 배틀 목록을 조회합니다. 상태별 필터링과 조회 개수 제한이 가능합니다.
 
 **Endpoint**
 ```
@@ -27,7 +186,12 @@ GET /api/battles
 
 **Request**
 - 인증: 필요 없음
-- Query Parameters: 없음
+- Query Parameters:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| status | String | No | - | 배틀 상태 필터 (YET, PROGRESS, END). 미지정 시 전체 조회 |
+| limit | Integer | No | 10 | 최대 조회 개수 (1~100, status 지정 시에만 적용) |
 
 **Response**
 - Status: `200 OK`
@@ -79,7 +243,7 @@ GET /api/battles
 
 ### 2. 배틀 생성
 
-새로운 배틀을 생성합니다.
+새로운 배틀을 생성합니다. 생성 시 첫 번째 팀이 자동 생성되고, 생성자가 해당 팀의 LEADER로 등록됩니다.
 
 **Endpoint**
 ```
@@ -87,7 +251,7 @@ POST /api/battles
 ```
 
 **Request**
-- 인증: 필요
+- 인증: 필요 (JWT Token)
 - Content-Type: `application/json`
 
 ```json
@@ -101,23 +265,25 @@ POST /api/battles
   "valuationTime": "15:30:00",
   "initialCapital": 1000000,
   "memberCount": 10,
-  "teamCount": 2
+  "teamCount": 2,
+  "teamName": "우리팀"
 }
 ```
 
 **Request Fields**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| type | String | No | 배틀 유형 (ALL, NORMAL) |
-| name | String | No | 배틀 이름 |
-| ticker | String | No | 종목 티커 |
+| type | String | No | 배틀 유형 (ALL, NORMAL). 기본값: NORMAL |
+| name | String | No | 배틀 이름. 기본값: "battle" |
+| ticker | String | No | 종목 티커. 기본값: "BTC" |
 | startAt | DateTime | Yes | 배틀 시작 시간 |
 | endAt | DateTime | Yes | 배틀 종료 시간 |
-| metricType | String | No | 평가 기준 (RATE: 수익률, PROCEED: 수익금) |
-| valuationTime | Time | No | 평가 시간 |
+| metricType | String | No | 평가 기준 (RATE, PROCEED). 기본값: RATE |
+| valuationTime | Time | No | 평가 시간. 기본값: 00:00:00 |
 | initialCapital | Integer | Yes | 초기 금액 (최소 1) |
-| memberCount | Integer | No | 최대 참가자 수 |
-| teamCount | Integer | No | 팀 수 제한 (기본값: 2) |
+| memberCount | Integer | No | 팀별 최대 참가자 수. 기본값: 10 |
+| teamCount | Integer | No | 팀 수 제한. 기본값: 2 |
+| teamName | String | No | 생성자의 팀 이름. 미입력 시 "{사용자이름}의 팀" |
 
 **Response**
 - Status: `201 CREATED`
@@ -155,18 +321,10 @@ POST /api/battles
 | metricType | String | 평가 기준 |
 | valuationTime | Time | 평가 시간 |
 | initialCapital | Integer | 초기 금액 |
-| memberCount | Integer | 최대 참가자 수 |
+| memberCount | Integer | 팀별 최대 참가자 수 |
 | teamCount | Integer | 팀 수 |
 | createdAt | DateTime | 생성 시간 |
 | updatedAt | DateTime | 수정 시간 |
-
-**Error Response**
-```json
-{
-  "message": "대결 시작일은 필수입니다.",
-  "status": 400
-}
-```
 
 ---
 
@@ -216,8 +374,6 @@ GET /api/battles/{battleId}
 
 Base URL: `/api/accounts`
 
-> **⚠️ 테스트 모드**: 현재 Account API는 인증을 비활성화한 테스트 모드입니다. DB의 첫 번째 사용자를 자동으로 사용합니다.
-
 ### 1. 개인 계좌 생성
 
 사용자의 개인 투자 계좌를 생성합니다.
@@ -228,10 +384,8 @@ POST /api/accounts/personal
 ```
 
 **Request**
-- 인증: 필요 없음 (테스트 모드)
-- Content-Type: `application/json`
+- 인증: 필요 (JWT Token)
 - Body: 없음
-- 참고: DB의 첫 번째 사용자 계좌를 생성합니다
 
 **Response**
 - Status: `200 OK`
@@ -242,12 +396,7 @@ POST /api/accounts/personal
 ```
 
 **Error Response**
-```json
-{
-  "status": 500,
-  "message": "테스트용 사용자가 없습니다. 먼저 사용자를 생성해주세요."
-}
-```
+- `400`: 이미 개인 계좌가 존재합니다.
 
 ---
 
@@ -261,8 +410,7 @@ GET /api/accounts/personal
 ```
 
 **Request**
-- 인증: 필요 없음 (테스트 모드)
-- 참고: DB의 첫 번째 사용자 계좌를 조회합니다
+- 인증: 필요 (JWT Token)
 
 **Response**
 - Status: `200 OK`
@@ -271,10 +419,10 @@ GET /api/accounts/personal
 ```json
 {
   "id": "uuid",
-  "name": "개인 계좌",
+  "name": "Personal Account",
   "balance": 500000,
-  "seedMoney": 1000000,
-  "totalAsset": 1500000
+  "seedMoney": 100000,
+  "totalAsset": 500000
 }
 ```
 
@@ -283,9 +431,9 @@ GET /api/accounts/personal
 |-------|------|-------------|
 | id | UUID | 계좌 고유 ID |
 | name | String | 계좌 이름 |
-| balance | Long | 현재 잔액 |
+| balance | Long | 현재 잔액 (예수금) |
 | seedMoney | Long | 초기 시드머니 |
-| totalAsset | Long | 총 자산 |
+| totalAsset | Long | 총 자산 (현금 + 보유 주식 평가액) |
 
 ---
 
@@ -299,10 +447,9 @@ GET /api/accounts/battle/{battleId}
 ```
 
 **Request**
-- 인증: 필요 없음 (테스트 모드)
+- 인증: 필요 (JWT Token)
 - Path Parameters:
   - `battleId` (UUID, required): 배틀 고유 ID
-- 참고: DB의 첫 번째 사용자의 배틀 계좌를 조회합니다
 
 **Response**
 - Status: `200 OK`
@@ -311,7 +458,7 @@ GET /api/accounts/battle/{battleId}
 ```json
 {
   "id": "uuid",
-  "name": "배틀 계좌 - 삼성전자 대결",
+  "name": "배틀 이름 Account",
   "balance": 300000,
   "seedMoney": 1000000,
   "totalAsset": 1200000
@@ -329,7 +476,7 @@ Base URL: `/api`
 
 ### 1. 팀 생성
 
-특정 배틀에 새로운 팀을 생성합니다.
+특정 배틀에 새로운 팀을 생성합니다. 생성자는 자동으로 LEADER로 등록되며, 배틀 계좌가 자동 생성됩니다.
 
 **Endpoint**
 ```
@@ -390,7 +537,7 @@ POST /api/battles/{battleId}/teams
 
 ---
 
-### 2. 배틀의 팀 목록 조회 (팀별 수익률 비교)
+### 2. 배틀의 팀 목록 조회
 
 특정 배틀의 모든 팀과 각 팀의 수익률 정보를 조회합니다.
 
@@ -494,14 +641,14 @@ GET /api/teams/{teamId}/members
 | role | String | 팀 역할 (LEADER, MEMBER) |
 | rank | Integer | 팀 내 순위 |
 | rate | Float | 개인 수익률 (%) |
-| status | String | 상태 (ACTIVE, INACTIVE) |
+| status | String | 상태 (ACTIVE, LEFT, KICKED) |
 | joinedAt | DateTime | 팀 가입 시간 |
 
 ---
 
 ### 4. 팀 가입 (초대 코드)
 
-초대 코드를 사용하여 팀에 가입합니다.
+초대 코드를 사용하여 팀에 가입합니다. 가입 시 배틀 계좌가 자동 생성됩니다.
 
 **Endpoint**
 ```
@@ -549,7 +696,7 @@ POST /api/teams/join
 
 ### 5. 팀 탈퇴
 
-현재 소속된 팀에서 탈퇴합니다.
+현재 소속된 팀에서 탈퇴합니다. LEADER가 탈퇴할 경우 랜덤 팀원에게 LEADER가 이전됩니다.
 
 **Endpoint**
 ```
@@ -573,7 +720,7 @@ Base URL: `/api/battles/{battleId}/comments`
 
 ### 1. 댓글 작성
 
-특정 배틀에 댓글을 작성합니다. parentId가 있으면 대댓글로 작성됩니다.
+특정 배틀에 댓글을 작성합니다. parentId가 있으면 대댓글로 작성됩니다. 해당 배틀에 참여한 팀원만 작성 가능합니다.
 
 **Endpoint**
 ```
@@ -599,7 +746,7 @@ POST /api/battles/{battleId}/comments
 |-------|------|----------|-------------|
 | battleId | UUID | Yes | 배틀 ID |
 | content | String | Yes | 댓글 내용 |
-| parentId | Long | No | 부모 댓글 ID (대댓글인 경우) |
+| parentId | Long | No | 부모 댓글 ID (대댓글인 경우). 대대댓글은 불가 |
 
 **Response**
 - Status: `201 CREATED`
@@ -628,7 +775,7 @@ POST /api/battles/{battleId}/comments
 | userId | UUID | 작성자 ID |
 | userNickname | String | 작성자 닉네임 |
 | parentId | Long | 부모 댓글 ID (원댓글이면 null) |
-| content | String | 댓글 내용 |
+| content | String | 댓글 내용 (삭제된 경우 "삭제된 댓글입니다.") |
 | isDeleted | Boolean | 삭제 여부 |
 | createdAt | DateTime | 작성 시간 |
 | updatedAt | DateTime | 수정 시간 |
@@ -638,7 +785,7 @@ POST /api/battles/{battleId}/comments
 
 ### 2. 배틀의 댓글 목록 조회
 
-특정 배틀의 모든 댓글을 조회합니다. 대댓글도 포함됩니다.
+특정 배틀의 모든 댓글을 계층형으로 조회합니다. 대댓글도 포함됩니다.
 
 **Endpoint**
 ```
@@ -714,53 +861,459 @@ DELETE /api/battles/{battleId}/comments/{commentId}
 
 ---
 
-## 공통 에러 응답
+## Order API
 
-### 인증 오류
+Base URL: `/api/orders`
+
+### 1. 주문 생성
+
+매수/매도 주문을 생성합니다.
+
+**Endpoint**
+```
+POST /api/orders
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Content-Type: `application/json`
+
 ```json
 {
-  "status": 401,
-  "message": "인증이 필요합니다."
+  "accountId": "uuid",
+  "stockCode": "BTCUSDT",
+  "stockName": "비트코인",
+  "orderPrice": 50000.00,
+  "quantity": 0.5,
+  "orderType": "BUY"
 }
 ```
 
-### 권한 오류
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| accountId | UUID | Yes | 계좌 ID |
+| stockCode | String | Yes | 종목 코드 |
+| stockName | String | Yes | 종목명 |
+| orderPrice | BigDecimal | Yes | 주문 가격 (0보다 커야 함) |
+| quantity | BigDecimal | Yes | 주문 수량 (0보다 커야 함) |
+| orderType | String | Yes | 주문 유형 (BUY: 매수, SELL: 매도) |
+
+**Response**
+- Status: `201 CREATED`
+- Body: `OrderResponse`
+
 ```json
 {
-  "status": 403,
-  "message": "접근 권한이 없습니다."
+  "id": "uuid",
+  "accountId": "uuid",
+  "stockCode": "BTCUSDT",
+  "stockName": "비트코인",
+  "orderPrice": 50000.00,
+  "quantity": 0.5,
+  "totalAmount": 25000.00,
+  "orderType": "BUY",
+  "status": "PENDING",
+  "createdAt": "2026-01-30T10:00:00"
 }
 ```
 
-### 리소스 없음
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | 주문 고유 ID |
+| accountId | UUID | 계좌 ID |
+| stockCode | String | 종목 코드 |
+| stockName | String | 종목명 |
+| orderPrice | BigDecimal | 주문 가격 |
+| quantity | BigDecimal | 주문 수량 |
+| totalAmount | BigDecimal | 주문 총액 (가격 × 수량) |
+| orderType | String | 주문 유형 (BUY, SELL) |
+| status | String | 주문 상태 (PENDING, FILLED, CANCELLED) |
+| createdAt | DateTime | 주문 생성 시간 |
+
+---
+
+### 2. 계좌별 주문 목록 조회
+
+특정 계좌의 모든 주문을 조회합니다.
+
+**Endpoint**
+```
+GET /api/orders/account/{accountId}
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Path Parameters:
+  - `accountId` (UUID, required): 계좌 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `List<OrderResponse>`
+
+```json
+[
+  {
+    "id": "uuid",
+    "accountId": "uuid",
+    "stockCode": "BTCUSDT",
+    "stockName": "비트코인",
+    "orderPrice": 50000.00,
+    "quantity": 0.5,
+    "totalAmount": 25000.00,
+    "orderType": "BUY",
+    "status": "FILLED",
+    "createdAt": "2026-01-30T10:00:00"
+  }
+]
+```
+
+**Response Fields**
+- 주문 생성 API의 Response Fields와 동일
+
+---
+
+### 3. 주문 취소
+
+미체결 주문을 취소합니다.
+
+**Endpoint**
+```
+POST /api/orders/{orderId}/cancel
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Path Parameters:
+  - `orderId` (UUID, required): 주문 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: String
+
+```json
+"주문이 취소되었습니다."
+```
+
+---
+
+### 4. 주문 수동 체결 (테스트용)
+
+주문을 수동으로 체결합니다. 테스트 목적의 API입니다.
+
+**Endpoint**
+```
+POST /api/orders/{orderId}/fill
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Path Parameters:
+  - `orderId` (UUID, required): 주문 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: String
+
+```json
+"주문이 체결되었습니다."
+```
+
+---
+
+## Rankings API
+
+Base URL: `/api/rankings`
+
+> 인증 없이 접근 가능합니다.
+
+### 1. 개인 계좌 수익률 랭킹
+
+개인 계좌 수익률 상위 랭킹을 조회합니다.
+
+**Endpoint**
+```
+GET /api/rankings/accounts/top
+```
+
+**Request**
+- 인증: 필요 없음
+- Query Parameters:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| limit | Integer | No | 10 | 조회할 상위 순위 수 (1~100) |
+
+**Response**
+- Status: `200 OK`
+- Body: `List<AccountRankingResponse>`
+
+```json
+[
+  {
+    "accountId": "uuid",
+    "userId": "uuid",
+    "accountName": "Personal Account",
+    "userName": "사용자 이름",
+    "seedMoney": 100000,
+    "totalAsset": 150000,
+    "returnRate": 50.0
+  }
+]
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accountId | UUID | 계좌 고유 ID |
+| userId | UUID | 사용자 ID |
+| accountName | String | 계좌 이름 |
+| userName | String | 사용자 이름 |
+| seedMoney | Long | 초기 시드머니 |
+| totalAsset | Long | 총 자산 |
+| returnRate | Double | 수익률 (%) |
+
+---
+
+## History API
+
+Base URL: `/api/history`
+
+### 1. 계좌별 거래 내역 조회
+
+특정 계좌의 거래 내역을 조회합니다.
+
+**Endpoint**
+```
+GET /api/history/account/{accountId}
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Path Parameters:
+  - `accountId` (UUID, required): 계좌 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `List<AccountHistoryResponse>`
+
+```json
+[
+  {
+    "id": "uuid",
+    "accountId": "uuid",
+    "tradeType": "BUY",
+    "amount": 50000.00,
+    "balanceSnapshot": 950000.00,
+    "description": "BTCUSDT 매수",
+    "createdAt": "2026-01-30T10:00:00"
+  }
+]
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | 거래 내역 ID |
+| accountId | UUID | 계좌 ID |
+| tradeType | String | 거래 유형 (BUY: 매수, SELL: 매도, SEED_MONEY: 시드머니 지급) |
+| amount | BigDecimal | 거래 금액 |
+| balanceSnapshot | BigDecimal | 거래 후 잔액 스냅샷 |
+| description | String | 거래 설명 |
+| createdAt | DateTime | 거래 시간 |
+
+---
+
+## MyPage API
+
+Base URL: `/api/mypage`
+
+### 1. 프로필 조회
+
+사용자의 프로필 정보를 조회합니다.
+
+**Endpoint**
+```
+GET /api/mypage/profile
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+
+**Response**
+- Status: `200 OK`
+- Body: `ProfileResponse`
+
 ```json
 {
-  "status": 404,
-  "message": "요청한 리소스를 찾을 수 없습니다."
+  "email": "user@example.com",
+  "name": "사용자 이름",
+  "nickname": "닉네임",
+  "age": 25,
+  "school": "학교명",
+  "company": "회사명"
 }
 ```
 
-### 유효성 검증 오류
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| email | String | 이메일 |
+| name | String | 이름 |
+| nickname | String | 닉네임 |
+| age | Integer | 나이 |
+| school | String | 학교명 |
+| company | String | 회사명 |
+
+---
+
+### 2. 프로필 수정
+
+사용자의 프로필 정보를 수정합니다.
+
+**Endpoint**
+```
+PATCH /api/mypage/profile
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Content-Type: `application/json`
+
 ```json
 {
-  "status": 400,
-  "message": "입력값이 유효하지 않습니다.",
-  "errors": [
-    {
-      "field": "startAt",
-      "message": "대결 시작일은 필수입니다."
-    }
-  ]
+  "school": "새 학교명",
+  "company": "새 회사명"
 }
 ```
 
-### 서버 오류
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| school | String | No | 학교명 |
+| company | String | No | 회사명 |
+
+**Response**
+- Status: `200 OK`
+- Body: `ProfileResponse`
+
 ```json
 {
-  "status": 500,
-  "message": "서버 내부 오류가 발생했습니다."
+  "email": "user@example.com",
+  "name": "사용자 이름",
+  "nickname": "닉네임",
+  "age": 25,
+  "school": "새 학교명",
+  "company": "새 회사명"
 }
 ```
+
+**Response Fields**
+- 프로필 조회 API의 Response Fields와 동일
+
+---
+
+### 3. 로그아웃
+
+사용자를 로그아웃합니다.
+
+**Endpoint**
+```
+POST /api/mypage/logout
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Body: 없음
+
+**Response**
+- Status: `204 NO CONTENT`
+- Body: 없음
+
+---
+
+### 4. 설정 조회
+
+사용자의 테마 및 알림 설정을 조회합니다.
+
+**Endpoint**
+```
+GET /api/mypage/settings
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+
+**Response**
+- Status: `200 OK`
+- Body: `SettingsResponse`
+
+```json
+{
+  "darkMode": false,
+  "orderExecution": true,
+  "battleStart": true,
+  "rankChange": true,
+  "profitRate": true,
+  "pushNotification": true,
+  "dailySummary": false,
+  "stockPriceAlert": false
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| darkMode | Boolean | 다크 모드 여부 |
+| orderExecution | Boolean | 주문 체결 알림 |
+| battleStart | Boolean | 배틀 시작 알림 |
+| rankChange | Boolean | 순위 변동 알림 |
+| profitRate | Boolean | 수익률 알림 |
+| pushNotification | Boolean | 푸시 알림 |
+| dailySummary | Boolean | 일일 요약 알림 |
+| stockPriceAlert | Boolean | 주가 알림 |
+
+---
+
+### 5. 설정 변경
+
+사용자의 테마 및 알림 설정을 변경합니다. 변경하지 않을 필드는 생략 가능합니다.
+
+**Endpoint**
+```
+PATCH /api/mypage/settings
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Content-Type: `application/json`
+
+```json
+{
+  "darkMode": true,
+  "pushNotification": false
+}
+```
+
+**Request Fields**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| darkMode | Boolean | No | 다크 모드 여부 |
+| orderExecution | Boolean | No | 주문 체결 알림 |
+| battleStart | Boolean | No | 배틀 시작 알림 |
+| rankChange | Boolean | No | 순위 변동 알림 |
+| profitRate | Boolean | No | 수익률 알림 |
+| pushNotification | Boolean | No | 푸시 알림 |
+| dailySummary | Boolean | No | 일일 요약 알림 |
+| stockPriceAlert | Boolean | No | 주가 알림 |
+
+**Response**
+- Status: `200 OK`
+- Body: `SettingsResponse`
+
+**Response Fields**
+- 설정 조회 API의 Response Fields와 동일
 
 ---
 
@@ -777,6 +1330,11 @@ Authorization: Bearer {JWT_TOKEN}
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
+
+**공개 API (인증 불필요)**
+- `POST /api/auth/**` (로그인, 토큰 갱신)
+- `GET /api/battles`, `GET /api/battles/**` (배틀 조회, 팀 목록, 댓글 목록, 팀원 목록)
+- `GET /api/rankings/**` (랭킹 조회)
 
 ---
 
@@ -803,7 +1361,27 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 #### TeamUserStatus
 - `ACTIVE`: 활성 상태
-- `INACTIVE`: 비활성 상태
+- `LEFT`: 탈퇴
+- `KICKED`: 강퇴
+
+#### OrderType
+- `BUY`: 매수
+- `SELL`: 매도
+
+#### OrderStatus
+- `PENDING`: 미체결
+- `FILLED`: 체결
+- `CANCELLED`: 취소
+
+#### TradeType
+- `BUY`: 매수
+- `SELL`: 매도
+- `SEED_MONEY`: 시드머니 지급
+
+#### Role
+- `GUEST`: 가입 대기 (추가 정보 입력 전)
+- `USER`: 일반 회원 (가입 완료)
+- `ADMIN`: 관리자
 
 ---
 
@@ -811,6 +1389,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 1. 모든 날짜/시간은 ISO 8601 형식을 사용합니다 (예: `2026-01-30T10:00:00`)
 2. UUID는 하이픈으로 구분된 36자 형식입니다 (예: `550e8400-e29b-41d4-a716-446655440000`)
-3. 금액은 정수형(Long/Integer)으로 처리되며, 원화 기준입니다
-4. 수익률은 Float 타입이며, 퍼센트(%) 단위입니다
+3. 금액은 정수형(Long/Integer) 또는 BigDecimal로 처리됩니다
+4. 수익률은 Float/Double 타입이며, 퍼센트(%) 단위입니다
 5. Time 형식은 `HH:mm:ss` 형식입니다 (예: `15:30:00`)

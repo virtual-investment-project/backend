@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -43,10 +44,9 @@ public class AccountService {
         return AccountResponse.from(account);
     }
 
-    public AccountResponse getBattleAccount(User user, UUID battleId) {
-        Account account = accountRepository.findByUserIdAndBattleId(user.getId(), battleId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 배틀의 계좌가 존재하지 않습니다."));
-        return AccountResponse.from(account);
+    public Optional<AccountResponse> getBattleAccount(User user, UUID battleId) {
+        return accountRepository.findByUserIdAndBattleId(user.getId(), battleId)
+                .map(AccountResponse::from);
     }
 
     /**

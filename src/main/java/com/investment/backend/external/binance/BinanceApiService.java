@@ -61,7 +61,7 @@ public class BinanceApiService {
                         log.debug("심볼 {} 현재가: {}", originalSymbol, response.getPrice());
                     }
                 }
-                log.info("배치 가격 조회 완료 - 조회 심볼: {}개, 성공: {}개", symbols.size(), priceMap.size());
+                // log.info("배치 가격 조회 완료 - 조회 심볼: {}개, 성공: {}개", symbols.size(), priceMap.size());
             } else {
                 log.warn("배치 가격 조회 응답이 null입니다.");
             }
