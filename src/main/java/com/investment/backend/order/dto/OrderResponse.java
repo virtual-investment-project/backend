@@ -16,6 +16,7 @@ public class OrderResponse {
 
     private UUID id;
     private UUID accountId;
+    private String accountName;
     private String stockCode;
     private String stockName;
     private BigDecimal orderPrice;
@@ -29,6 +30,7 @@ public class OrderResponse {
         return OrderResponse.builder()
                 .id(order.getId())
                 .accountId(order.getAccount().getId())
+                .accountName(order.getAccount().getName())
                 .stockCode(order.getStockCode())
                 .stockName(order.getStockName())
                 .orderPrice(order.getOrderPrice())
