@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,6 +48,23 @@ public class AccountService {
         Account account = accountRepository.findByUserIdAndBattleId(user.getId(), battleId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 배틀의 계좌가 존재하지 않습니다."));
         return AccountResponse.from(account);
+    }
+
+    // 내 전체 계좌 목록 조회(개인 + 배틀)
+    public List<AccountResponse> getMyAccounts(User user) {
+        return accountRepository.findByUserId(user.getId()).stream()
+                .map(AccountResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    // 계좌의 보유 종목 조회 (소유자 검증 포함)
+    public List<StockHoldingsResponse> getAccountStocks(User user, UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("계좌가 존재하지 않습니다."));
+        if (!account.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다.");
+        }
+        return stockHoldingsService.getHoldingsByAccount(accountId);
     }
 
     /**
