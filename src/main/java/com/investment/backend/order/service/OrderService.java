@@ -5,12 +5,15 @@ import com.investment.backend.account.repository.AccountRepository;
 import com.investment.backend.history.enums.TradeType;
 import com.investment.backend.history.service.AccountHistoryService;
 import com.investment.backend.holdings.service.StockHoldingsService;
+import com.investment.backend.notification.enums.NotificationType;
+import com.investment.backend.notification.service.NotificationService;
 import com.investment.backend.order.dto.CreateOrderRequest;
 import com.investment.backend.order.dto.OrderResponse;
 import com.investment.backend.order.entity.Order;
 import com.investment.backend.order.enums.OrderStatus;
 import com.investment.backend.order.enums.OrderType;
 import com.investment.backend.order.repository.OrderRepository;
+import com.investment.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ public class OrderService {
     private final AccountRepository accountRepository;
     private final StockHoldingsService stockHoldingsService;
     private final AccountHistoryService accountHistoryService;
+    private final NotificationService notificationService;
 
     // 주문 생성
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -136,6 +140,14 @@ public class OrderService {
         // 주문 상태 변경
         order.fillOrder();
 
-        // 총 자산은 별도 스케줄러에서 주기적으로 업데이트됨
+        // 주문 체결 알림 생성
+        User user = account.getUser();
+        String orderTypeStr = order.getOrderType() == OrderType.BUY ? "매수" : "매도";
+        String title = String.format("[%s] %s %s 체결", account.getName(), order.getStockName(), orderTypeStr);
+        String message = String.format("%s %s주 @$%s (총 $%s)",
+                orderTypeStr, order.getQuantity().stripTrailingZeros().toPlainString(),
+                orderPrice.stripTrailingZeros().toPlainString(),
+                totalAmount.stripTrailingZeros().toPlainString());
+        notificationService.createNotification(user, NotificationType.ORDER_FILLED, title, message, null);
     }
 }
