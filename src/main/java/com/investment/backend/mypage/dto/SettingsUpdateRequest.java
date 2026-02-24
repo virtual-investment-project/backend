@@ -15,8 +15,5 @@ public class SettingsUpdateRequest {
     private Boolean orderExecution;
     private Boolean battleStart;
     private Boolean rankChange;
-    private Boolean profitRate;
-    private Boolean pushNotification;
-    private Boolean dailySummary;
     private Boolean stockPriceAlert;
 }
