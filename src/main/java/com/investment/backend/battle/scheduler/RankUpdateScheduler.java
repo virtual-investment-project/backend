@@ -72,9 +72,12 @@ public class RankUpdateScheduler {
             if (team.hasRankChanged()) {
                 String direction = team.getCurrentRank() < team.getPreviousRank() ? "↑" : "↓";
                 String title = String.format("순위 변동 %s", direction);
-                String message = String.format("'%s'에서 '%s' 팀이 %d위 → %d위 (수익률: %.1f%%)",
+                String metric = battle.getMetricType() == MetricType.PROCEED
+                        ? String.format("수익금: %,d원", team.getProceed())
+                        : String.format("수익률: %.1f%%", team.getRate());
+                String message = String.format("'%s'에서 '%s' 팀이 %d위 → %d위 (%s)",
                         battle.getName(), team.getName(),
-                        team.getPreviousRank(), team.getCurrentRank(), team.getRate());
+                        team.getPreviousRank(), team.getCurrentRank(), metric);
 
                 // 해당 팀원들에게 알림
                 List<TeamUser> members = teamUserRepository.findByTeamIdAndStatus(
