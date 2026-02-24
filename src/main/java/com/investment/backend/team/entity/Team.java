@@ -36,6 +36,12 @@ public class Team {
     @Column(nullable = false)
     private Integer proceed;
 
+    @Column(nullable = false)
+    private Integer currentRank = 0;
+
+    @Column(nullable = false)
+    private Integer previousRank = 0;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -50,6 +56,8 @@ public class Team {
         this.description = description;
         this.rate = 0.0f;
         this.proceed = 0;
+        this.currentRank = 0;
+        this.previousRank = 0;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -61,5 +69,16 @@ public class Team {
 
     public void regenerateInviteCode() {
         this.inviteCode = UUID.randomUUID();
+    }
+
+    // 순위 업데이트 (이전 순위 보존)
+    public void updateRank(Integer newRank) {
+        this.previousRank = this.currentRank;
+        this.currentRank = newRank;
+    }
+
+    // 순위 변동 여부 확인
+    public boolean hasRankChanged() {
+        return previousRank != 0 && !currentRank.equals(previousRank);
     }
 }

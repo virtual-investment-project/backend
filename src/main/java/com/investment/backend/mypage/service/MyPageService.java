@@ -39,9 +39,6 @@ public class MyPageService {
                 .orderExecution(user.getOrderExecution())
                 .battleStart(user.getBattleStart())
                 .rankChange(user.getRankChange())
-                .profitRate(user.getProfitRate())
-                .pushNotification(user.getPushNotification())
-                .dailySummary(user.getDailySummary())
                 .stockPriceAlert(user.getStockPriceAlert())
                 .build();
     }
@@ -57,9 +54,6 @@ public class MyPageService {
                 request.getOrderExecution(),
                 request.getBattleStart(),
                 request.getRankChange(),
-                request.getProfitRate(),
-                request.getPushNotification(),
-                request.getDailySummary(),
                 request.getStockPriceAlert());
 
         userRepository.save(user);

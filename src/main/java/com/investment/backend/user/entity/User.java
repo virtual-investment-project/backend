@@ -48,15 +48,6 @@ public class User {
     private Boolean rankChange = true;
 
     @Column(nullable = false)
-    private Boolean profitRate = true;
-
-    @Column(nullable = false)
-    private Boolean pushNotification = true;
-
-    @Column(nullable = false)
-    private Boolean dailySummary = false;
-
-    @Column(nullable = false)
     private Boolean stockPriceAlert = false;
 
     @Enumerated(EnumType.STRING)
@@ -115,9 +106,6 @@ public class User {
             Boolean orderExecution,
             Boolean battleStart,
             Boolean rankChange,
-            Boolean profitRate,
-            Boolean pushNotification,
-            Boolean dailySummary,
             Boolean stockPriceAlert) {
         if (orderExecution != null)
             this.orderExecution = orderExecution;
@@ -125,12 +113,6 @@ public class User {
             this.battleStart = battleStart;
         if (rankChange != null)
             this.rankChange = rankChange;
-        if (profitRate != null)
-            this.profitRate = profitRate;
-        if (pushNotification != null)
-            this.pushNotification = pushNotification;
-        if (dailySummary != null)
-            this.dailySummary = dailySummary;
         if (stockPriceAlert != null)
             this.stockPriceAlert = stockPriceAlert;
     }
