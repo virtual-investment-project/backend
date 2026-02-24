@@ -2,6 +2,7 @@ package com.investment.backend.battle.scheduler;
 
 import com.investment.backend.battle.entity.Battle;
 import com.investment.backend.battle.enums.BattleStatus;
+import com.investment.backend.battle.enums.MetricType;
 import com.investment.backend.battle.repository.BattleRepository;
 import com.investment.backend.notification.enums.NotificationType;
 import com.investment.backend.notification.service.NotificationService;
@@ -52,9 +53,13 @@ public class RankUpdateScheduler {
             return;
         }
 
-        // 수익률(rate) 기준 내림차순 정렬 → 순위 계산
+        // 배틀의 평가 기준(metricType)에 따라 정렬
+        Comparator<Team> comparator = battle.getMetricType() == MetricType.PROCEED
+                ? Comparator.comparing(Team::getProceed).reversed()
+                : Comparator.comparing(Team::getRate).reversed();
+
         List<Team> sortedTeams = teams.stream()
-                .sorted(Comparator.comparing(Team::getRate).reversed())
+                .sorted(comparator)
                 .toList();
 
         for (int i = 0; i < sortedTeams.size(); i++) {
