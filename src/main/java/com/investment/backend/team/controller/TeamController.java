@@ -40,8 +40,10 @@ public class TeamController {
      * Battle의 팀 목록 조회
      */
     @GetMapping("/battles/{battleId}/teams")
-    public ResponseEntity<List<TeamResponse>> getTeams(@PathVariable UUID battleId) {
-        List<TeamResponse> teams = teamService.getTeamsByBattle(battleId);
+    public ResponseEntity<List<TeamResponse>> getTeams(
+            @PathVariable UUID battleId,
+            @AuthenticationPrincipal User user) {
+        List<TeamResponse> teams = teamService.getTeamsByBattle(battleId, user);
         return ResponseEntity.ok(teams);
     }
 
@@ -75,6 +77,19 @@ public class TeamController {
             @AuthenticationPrincipal User user) {
 
         teamService.leaveTeam(teamId, user);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 팀원 추방 (LEADER 전용)
+     */
+    @DeleteMapping("/teams/{teamId}/members/{teamUserId}/kick")
+    public ResponseEntity<Void> kickMember(
+            @PathVariable Long teamId,
+            @PathVariable Long teamUserId,
+            @AuthenticationPrincipal User user) {
+
+        teamService.kickMember(teamId, teamUserId, user);
         return ResponseEntity.noContent().build();
     }
 }

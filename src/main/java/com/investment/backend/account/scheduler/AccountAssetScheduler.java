@@ -39,7 +39,7 @@ public class AccountAssetScheduler {
                 return;
             }
             
-            // log.info("계좌 총 자산 업데이트 스케줄러 실행 - 계좌 수: {}개", accounts.size());
+            log.info("계좌 총 자산 업데이트 스케줄러 실행 - 계좌 수: {}개", accounts.size());
             
             // 1. 모든 계좌의 보유 주식에서 유니크한 심볼 수집
             Set<String> allSymbols = new HashSet<>();
@@ -53,7 +53,7 @@ public class AccountAssetScheduler {
             }
             
             if (allSymbols.isEmpty()) {
-                // log.info("모든 계좌에 보유 주식이 없습니다.");
+                log.info("모든 계좌에 보유 주식이 없습니다.");
                 // 잔액만으로 총 자산 업데이트
                 for (Account account : accounts) {
                     try {
@@ -65,7 +65,7 @@ public class AccountAssetScheduler {
                 return;
             }
             
-            // log.info("배치 가격 조회 - 유니크 심볼 수: {}개", allSymbols.size());
+            log.info("배치 가격 조회 - 유니크 심볼 수: {}개", allSymbols.size());
             
             // 2. 배치로 모든 심볼의 가격을 한 번에 조회
             Map<String, BigDecimal> priceMap = binanceApiService.getCurrentPrices(allSymbols);
@@ -75,7 +75,7 @@ public class AccountAssetScheduler {
                 return;
             }
             
-            // log.info("배치 가격 조회 완료 - 조회 성공: {}개", priceMap.size());
+            log.info("배치 가격 조회 완료 - 조회 성공: {}개", priceMap.size());
             
             // 3. 보유 종목들의 currentPrice를 DB에 업데이트
             stockHoldingsService.updateCurrentPrices(priceMap);
@@ -94,7 +94,7 @@ public class AccountAssetScheduler {
                 }
             }
             
-            // log.info("계좌 총 자산 업데이트 완료 - 성공: {}개, 실패: {}개", successCount, failCount);
+            log.info("계좌 총 자산 업데이트 완료 - 성공: {}개, 실패: {}개", successCount, failCount);
             
         } catch (Exception e) {
             log.error("계좌 총 자산 업데이트 스케줄러 실행 중 에러: {}", e.getMessage());

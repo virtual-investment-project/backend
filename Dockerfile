@@ -8,11 +8,17 @@ RUN chmod +x gradlew
 
 # 의존성 파일만 먼저 복사하여 의존성 캐싱
 COPY build.gradle settings.gradle ./
-RUN ./gradlew dependencies --no-daemon || true
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew dependencies --no-daemon \
+    -Dorg.gradle.internal.http.socketTimeout=120000 \
+    -Dorg.gradle.internal.http.connectionTimeout=120000
 
 # 소스 코드 복사 및 빌드
 COPY src ./src
-RUN ./gradlew build -x test --no-daemon
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew build -x test --no-daemon \
+    -Dorg.gradle.internal.http.socketTimeout=120000 \
+    -Dorg.gradle.internal.http.connectionTimeout=120000
 
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app

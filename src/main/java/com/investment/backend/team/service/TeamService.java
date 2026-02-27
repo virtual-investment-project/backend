@@ -76,21 +76,24 @@ public class TeamService {
                 user, savedTeam, battle, (long) battle.getInitialCapital());
         accountRepository.save(battleAccount);
 
-        return TeamResponse.from(savedTeam, 1);
+        return TeamResponse.from(savedTeam, 1, true);
     }
 
     /**
-     * Battle의 팀 목록 조회
+     * - 본인이 소속된 팀만 inviteCode 노출, 상대팀은 null
      */
     @Transactional(readOnly = true)
-    public List<TeamResponse> getTeamsByBattle(UUID battleId) {
+    public List<TeamResponse> getTeamsByBattle(UUID battleId, User user) {
         List<Team> teams = teamRepository.findByBattleId(battleId);
 
         return teams.stream()
                 .map(team -> {
                     int memberCount = (int) teamUserRepository.countByTeamIdAndStatus(team.getId(),
                             TeamUserStatus.ACTIVE);
-                    return TeamResponse.from(team, memberCount);
+                    boolean isMember = user != null &&
+                            teamUserRepository.existsByTeamIdAndUserIdAndStatus(
+                                    team.getId(), user.getId(), TeamUserStatus.ACTIVE);
+                    return TeamResponse.from(team, memberCount, isMember);
                 })
                 .toList();
     }
@@ -129,7 +132,7 @@ public class TeamService {
                 user, team, battle, (long) battle.getInitialCapital());
         accountRepository.save(battleAccount);
 
-        return TeamResponse.from(team, (int) currentMemberCount + 1);
+        return TeamResponse.from(team, (int) currentMemberCount + 1, true);
     }
 
     /**
@@ -155,6 +158,43 @@ public class TeamService {
         }
 
         teamUser.leave();
+    }
+
+    /**
+     * 팀원 추방 (LEADER만 가능)
+     * - 자기 자신은 추방 불가
+     * - LEADER는 추방 불가
+     */
+    public void kickMember(Long teamId, Long targetTeamUserId, User user) {
+        // 요청자가 해당 팀의 LEADER인지 확인
+        TeamUser requester = teamUserRepository
+                .findByTeamIdAndUserIdAndStatus(teamId, user.getId(), TeamUserStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("팀에 가입되어 있지 않습니다."));
+
+        if (requester.getRole() != TeamUserRole.LEADER) {
+            throw new IllegalArgumentException("팀장만 팀원을 추방할 수 있습니다.");
+        }
+
+        // 추방 대상 조회
+        TeamUser target = teamUserRepository.findById(targetTeamUserId)
+                .orElseThrow(() -> new IllegalArgumentException("팀원을 찾을 수 없습니다."));
+
+        // 같은 팀인지 확인
+        if (!target.getTeam().getId().equals(teamId)) {
+            throw new IllegalArgumentException("해당 팀의 팀원이 아닙니다.");
+        }
+
+        // 이미 탈퇴/추방 상태인지 확인
+        if (target.getStatus() != TeamUserStatus.ACTIVE) {
+            throw new IllegalArgumentException("이미 탈퇴하거나 추방된 팀원입니다.");
+        }
+
+        // 자기 자신 추방 불가
+        if (target.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("자기 자신을 추방할 수 없습니다.");
+        }
+
+        target.kick();
     }
 
     /**

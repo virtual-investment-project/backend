@@ -7,8 +7,10 @@ import com.investment.backend.comment.dto.CreateCommentRequest;
 import com.investment.backend.comment.entity.Comment;
 import com.investment.backend.comment.repository.CommentRepository;
 import com.investment.backend.team.repository.TeamUserRepository;
+import com.investment.backend.team.enums.TeamUserRole;
 import com.investment.backend.team.enums.TeamUserStatus;
 import com.investment.backend.user.entity.User;
+import com.investment.backend.user.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,20 +85,19 @@ public class CommentService {
 
     /**
      * 댓글 삭제 (soft delete)
-     * TODO: 권한 체크 로직 추가 필요 - 어드민 또는 본인만 삭제 가능
+     * 삭제 가능: 본인 | 해당 배틀 팀장 | ADMIN
      */
     public void deleteComment(Long commentId, User user) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        // TODO: 권한 체크 - 어드민이거나 본인인 경우만 삭제 허용
-        // if (!user.getRole().equals(Role.ADMIN) &&
-        // !comment.getUser().getId().equals(user.getId())) {
-        // throw new AccessDeniedException("삭제 권한이 없습니다.");
-        // }
+        boolean isAuthor = comment.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+        boolean isBattleLeader = teamUserRepository.existsByTeam_Battle_IdAndUserIdAndStatusAndRole(
+                comment.getBattle().getId(), user.getId(),
+                TeamUserStatus.ACTIVE, TeamUserRole.LEADER);
 
-        // 임시: 본인만 삭제 가능
-        if (!comment.getUser().getId().equals(user.getId())) {
+        if (!isAuthor && !isAdmin && !isBattleLeader) {
             throw new IllegalArgumentException("삭제 권한이 없습니다.");
         }
 

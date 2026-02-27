@@ -1,9 +1,12 @@
 package com.investment.backend.battle.controller;
 
+import com.investment.backend.account.dto.AccountProfitResponse;
 import com.investment.backend.battle.dto.BattleListResponse;
 import com.investment.backend.battle.dto.BattleResponse;
 import com.investment.backend.battle.dto.CreateBattleRequest;
+import com.investment.backend.battle.dto.TeamProfitResponse;
 import com.investment.backend.battle.enums.BattleStatus;
+import com.investment.backend.battle.service.BattleProfitService;
 import com.investment.backend.battle.service.BattleService;
 import com.investment.backend.user.entity.User;
 import jakarta.validation.Valid;
@@ -22,6 +25,7 @@ import java.util.UUID;
 public class BattleController {
 
     private final BattleService battleService;
+    private final BattleProfitService battleProfitService;
 
     /**
      * Battle 목록 조회 (선택적 상태 필터 + limit)
@@ -64,4 +68,24 @@ public class BattleController {
     }
 
     // TODO: 실시간 현재가 조회 API (외부 API 연동 필요)
+
+    /**
+     * 배틀 내 계좌별 개인 수익률 조회 (수익률 내림차순)
+     * GET /api/battles/{battleId}/profit/accounts
+     */
+    @GetMapping("/{battleId}/profit/accounts")
+    public ResponseEntity<List<AccountProfitResponse>> getBattleAccountProfits(
+            @PathVariable UUID battleId) {
+        return ResponseEntity.ok(battleProfitService.getAccountProfits(battleId));
+    }
+
+    /**
+     * 배틀 내 팀별 합산 수익률 조회 (수익률 내림차순, 팀원 개인 수익률 포함)
+     * GET /api/battles/{battleId}/profit/teams
+     */
+    @GetMapping("/{battleId}/profit/teams")
+    public ResponseEntity<List<TeamProfitResponse>> getBattleTeamProfits(
+            @PathVariable UUID battleId) {
+        return ResponseEntity.ok(battleProfitService.getTeamProfits(battleId));
+    }
 }

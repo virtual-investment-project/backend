@@ -4,13 +4,19 @@
 - [Auth API](#auth-api)
 - [User API](#user-api)
 - [Battle API](#battle-api)
+  - [4. 배틀 계좌별 개인 수익률 조회](#4-배틀-계좌별-개인-수익률-조회)
+  - [5. 배틀 팀별 합산 수익률 조회](#5-배틀-팀별-합산-수익률-조회)
 - [Account API](#account-api)
+  - [4. 내 개인 계좌 수익률 조회](#4-내-개인-계좌-수익률-조회)
+  - [5. 내 배틀 계좌 수익률 조회](#5-내-배틀-계좌-수익률-조회)
+  - [6. 계좌 ID로 수익률 조회](#6-계좌-id로-수익률-조회)
 - [Team API](#team-api)
 - [Comment API](#comment-api)
 - [Order API](#order-api)
 - [Rankings API](#rankings-api)
 - [History API](#history-api)
 - [MyPage API](#mypage-api)
+  - [6. 내 전체 계좌 수익률 조회](#6-내-전체-계좌-수익률-조회)
 
 ---
 
@@ -370,6 +376,174 @@ GET /api/battles/{battleId}
 
 ---
 
+### 4. 배틀 계좌별 개인 수익률 조회
+
+특정 배틀에 참가한 모든 계좌의 개인 수익률을 수익률 내림차순으로 조회합니다.
+
+**Endpoint**
+```
+GET /api/battles/{battleId}/profit/accounts
+```
+
+**Request**
+- 인증: 필요 없음
+- Path Parameters:
+  - `battleId` (UUID, required): 배틀 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `List<AccountProfitResponse>`
+
+```json
+[
+  {
+    "accountId": "uuid",
+    "userId": "uuid",
+    "userName": "사용자 이름",
+    "teamId": 1,
+    "teamName": "불타는팀",
+    "seedMoney": 1000000,
+    "totalAsset": 1253000,
+    "returnAmount": 253000,
+    "returnRate": 25.30
+  },
+  {
+    "accountId": "uuid",
+    "userId": "uuid",
+    "userName": "사용자2",
+    "teamId": 2,
+    "teamName": "승리팀",
+    "seedMoney": 1000000,
+    "totalAsset": 1183000,
+    "returnAmount": 183000,
+    "returnRate": 18.30
+  }
+]
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accountId | UUID | 계좌 고유 ID |
+| userId | UUID | 사용자 ID |
+| userName | String | 사용자 이름 |
+| teamId | Long | 팀 ID (배틀 계좌이므로 항상 존재) |
+| teamName | String | 팀 이름 |
+| seedMoney | Long | 초기 시드머니 |
+| totalAsset | Long | 현재 총 자산 (현금 + 보유 주식 평가액) |
+| returnAmount | Long | 수익금 (totalAsset − seedMoney) |
+| returnRate | Double | 수익률 (%, 소수점 2자리 반올림) |
+
+**참고**
+- 수익률 내림차순으로 정렬됩니다
+- `totalAsset`은 스케줄러에 의해 1초마다 갱신됩니다
+- 수익금이 음수이면 손실을 의미합니다
+
+---
+
+### 5. 배틀 팀별 합산 수익률 조회
+
+특정 배틀의 팀별 합산 수익률을 조회합니다. 각 팀의 수익률과 함께 팀원 개인 수익률도 포함됩니다.
+
+**Endpoint**
+```
+GET /api/battles/{battleId}/profit/teams
+```
+
+**Request**
+- 인증: 필요 없음
+- Path Parameters:
+  - `battleId` (UUID, required): 배틀 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `List<TeamProfitResponse>`
+
+```json
+[
+  {
+    "teamId": 1,
+    "teamName": "불타는팀",
+    "battleId": "uuid",
+    "totalSeedMoney": 5000000,
+    "totalAsset": 5842000,
+    "returnAmount": 842000,
+    "returnRate": 16.84,
+    "memberCount": 5,
+    "rank": 1,
+    "members": [
+      {
+        "accountId": "uuid",
+        "userId": "uuid",
+        "userName": "투자왕",
+        "teamId": 1,
+        "teamName": "불타는팀",
+        "seedMoney": 1000000,
+        "totalAsset": 1253000,
+        "returnAmount": 253000,
+        "returnRate": 25.30
+      },
+      {
+        "accountId": "uuid",
+        "userId": "uuid",
+        "userName": "주식고수",
+        "teamId": 1,
+        "teamName": "불타는팀",
+        "seedMoney": 1000000,
+        "totalAsset": 1170000,
+        "returnAmount": 170000,
+        "returnRate": 17.00
+      }
+    ]
+  },
+  {
+    "teamId": 2,
+    "teamName": "승리팀",
+    "battleId": "uuid",
+    "totalSeedMoney": 4000000,
+    "totalAsset": 4492000,
+    "returnAmount": 492000,
+    "returnRate": 12.30,
+    "memberCount": 4,
+    "rank": 2,
+    "members": []
+  }
+]
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| teamId | Long | 팀 ID |
+| teamName | String | 팀 이름 |
+| battleId | UUID | 배틀 ID |
+| totalSeedMoney | Long | 팀원 전체 시드머니 합산 |
+| totalAsset | Long | 팀원 전체 총 자산 합산 |
+| returnAmount | Long | 팀 합산 수익금 (totalAsset − totalSeedMoney) |
+| returnRate | Double | 팀 합산 수익률 (%, 소수점 2자리 반올림) |
+| memberCount | Integer | 팀원 수 |
+| rank | Integer | 배틀 내 팀 순위 (수익률 내림차순) |
+| members | Array | 팀원 개인 수익률 목록 (수익률 내림차순) |
+| members[].accountId | UUID | 계좌 ID |
+| members[].userId | UUID | 사용자 ID |
+| members[].userName | String | 사용자 이름 |
+| members[].teamId | Long | 팀 ID |
+| members[].teamName | String | 팀 이름 |
+| members[].seedMoney | Long | 초기 시드머니 |
+| members[].totalAsset | Long | 현재 총 자산 |
+| members[].returnAmount | Long | 수익금 |
+| members[].returnRate | Double | 수익률 (%, 소수점 2자리 반올림) |
+
+**팀 수익률 계산 방식**
+
+$$\text{팀 합산 수익률(\%)} = \frac{\sum totalAsset - \sum seedMoney}{\sum seedMoney} \times 100$$
+
+**참고**
+- 팀 수익률 내림차순으로 정렬되며, `rank` 필드로 순위를 확인할 수 있습니다
+- `members` 배열도 수익률 내림차순으로 정렬됩니다
+
+---
+
 ## Account API
 
 Base URL: `/api/accounts`
@@ -467,6 +641,150 @@ GET /api/accounts/battle/{battleId}
 
 **Response Fields**
 - 개인 계좌 조회 API의 Response Fields와 동일
+
+---
+
+### 4. 내 개인 계좌 수익률 조회
+
+로그인한 사용자의 개인 계좌 수익금 및 수익률을 조회합니다.
+
+**Endpoint**
+```
+GET /api/accounts/personal/profit
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Body: 없음
+
+**Response**
+- Status: `200 OK`
+- Body: `AccountProfitResponse`
+
+```json
+{
+  "accountId": "uuid",
+  "userId": "uuid",
+  "userName": "사용자 이름",
+  "teamId": null,
+  "teamName": null,
+  "seedMoney": 100000,
+  "totalAsset": 134200,
+  "returnAmount": 34200,
+  "returnRate": 34.20
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accountId | UUID | 계좌 고유 ID |
+| userId | UUID | 사용자 ID |
+| userName | String | 사용자 이름 |
+| teamId | Long | 팀 ID (개인 계좌이므로 항상 `null`) |
+| teamName | String | 팀 이름 (개인 계좌이므로 항상 `null`) |
+| seedMoney | Long | 초기 시드머니 |
+| totalAsset | Long | 현재 총 자산 (현금 + 보유 주식 평가액) |
+| returnAmount | Long | 수익금 (totalAsset − seedMoney, 음수이면 손실) |
+| returnRate | Double | 수익률 (%, 소수점 2자리 반올림, 음수이면 손실) |
+
+**Error Response**
+- `400`: 개인 계좌가 존재하지 않습니다.
+
+---
+
+### 5. 내 배틀 계좌 수익률 조회
+
+로그인한 사용자의 특정 배틀 계좌 수익금 및 수익률을 조회합니다.
+
+**Endpoint**
+```
+GET /api/accounts/battle/{battleId}/profit
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Path Parameters:
+  - `battleId` (UUID, required): 배틀 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `AccountProfitResponse`
+
+```json
+{
+  "accountId": "uuid",
+  "userId": "uuid",
+  "userName": "사용자 이름",
+  "teamId": 1,
+  "teamName": "불타는팀",
+  "seedMoney": 1000000,
+  "totalAsset": 1253000,
+  "returnAmount": 253000,
+  "returnRate": 25.30
+}
+```
+
+**Response Fields**
+- `4. 내 개인 계좌 수익률 조회` API의 Response Fields와 동일
+
+**Error Response**
+- `400`: 해당 배틀의 계좌가 존재하지 않습니다.
+
+---
+
+### 6. 계좌 ID로 수익률 조회
+
+계좌 ID를 직접 지정하여 해당 계좌의 수익금 및 수익률을 조회합니다. 인증 없이 누구나 조회 가능하며, 랭킹 화면이나 타 사용자 계좌 조회 시 사용합니다.
+
+**Endpoint**
+```
+GET /api/accounts/{accountId}/profit
+```
+
+**Request**
+- 인증: 필요 없음
+- Path Parameters:
+  - `accountId` (UUID, required): 계좌 고유 ID
+
+**Response**
+- Status: `200 OK`
+- Body: `AccountProfitResponse`
+
+```json
+{
+  "accountId": "uuid",
+  "userId": "uuid",
+  "userName": "사용자 이름",
+  "teamId": 1,
+  "teamName": "불타는팀",
+  "seedMoney": 1000000,
+  "totalAsset": 1253000,
+  "returnAmount": 253000,
+  "returnRate": 25.30
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| accountId | UUID | 계좌 고유 ID |
+| userId | UUID | 소유자 사용자 ID |
+| userName | String | 소유자 이름 |
+| teamId | Long | 팀 ID (개인 계좌이면 `null`) |
+| teamName | String | 팀 이름 (개인 계좌이면 `null`) |
+| seedMoney | Long | 초기 시드머니 |
+| totalAsset | Long | 현재 총 자산 (현금 + 보유 주식 평가액) |
+| returnAmount | Long | 수익금 (totalAsset − seedMoney, 음수이면 손실) |
+| returnRate | Double | 수익률 (%, 소수점 2자리 반올림, 음수이면 손실) |
+
+**Error Response**
+- `400`: 계좌가 존재하지 않습니다.
+
+**참고**
+- 개인 계좌: `teamId`, `teamName`이 `null`로 반환됩니다
+- 배틀 계좌: `teamId`, `teamName`이 포함됩니다
+- `totalAsset`은 스케줄러에 의해 1초마다 갱신됩니다
 
 ---
 
@@ -1117,7 +1435,7 @@ GET /api/history/account/{accountId}
 |-------|------|-------------|
 | id | UUID | 거래 내역 ID |
 | accountId | UUID | 계좌 ID |
-| tradeType | String | 거래 유형 (BUY: 매수, SELL: 매도, SEED_MONEY: 시드머니 지급) |
+| tradeType | String | 거래 유형 (BUY: 매수, SELL: 매도, SEED_MONEY: 시드머니 지급, PROFIT_SNAPSHOT: 수익률 스냅샷) |
 | amount | BigDecimal | 거래 금액 |
 | balanceSnapshot | BigDecimal | 거래 후 잔액 스냅샷 |
 | description | String | 거래 설명 |
@@ -1317,6 +1635,95 @@ PATCH /api/mypage/settings
 
 ---
 
+### 6. 내 전체 계좌 수익률 조회
+
+로그인한 사용자의 개인 계좌 수익률과 참여 중인 모든 배틀 계좌 수익률을 한 번에 조회합니다. 마이페이지 수익률 대시보드에서 사용합니다.
+
+**Endpoint**
+```
+GET /api/mypage/profit
+```
+
+**Request**
+- 인증: 필요 (JWT Token)
+- Body: 없음
+
+**Response**
+- Status: `200 OK`
+- Body: `MyPageProfitResponse`
+
+```json
+{
+  "personalAccount": {
+    "accountId": "uuid",
+    "userId": "uuid",
+    "userName": "사용자 이름",
+    "teamId": null,
+    "teamName": null,
+    "seedMoney": 100000,
+    "totalAsset": 134200,
+    "returnAmount": 34200,
+    "returnRate": 34.20
+  },
+  "battleAccounts": [
+    {
+      "accountId": "uuid",
+      "userId": "uuid",
+      "userName": "사용자 이름",
+      "teamId": 1,
+      "teamName": "불타는팀",
+      "seedMoney": 1000000,
+      "totalAsset": 1253000,
+      "returnAmount": 253000,
+      "returnRate": 25.30
+    },
+    {
+      "accountId": "uuid",
+      "userId": "uuid",
+      "userName": "사용자 이름",
+      "teamId": 3,
+      "teamName": "챌린저스",
+      "seedMoney": 500000,
+      "totalAsset": 482000,
+      "returnAmount": -18000,
+      "returnRate": -3.60
+    }
+  ]
+}
+```
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+| personalAccount | Object | 개인 계좌 수익률. 개인 계좌가 없으면 `null` |
+| personalAccount.accountId | UUID | 계좌 고유 ID |
+| personalAccount.userId | UUID | 사용자 ID |
+| personalAccount.userName | String | 사용자 이름 |
+| personalAccount.teamId | Long | 항상 `null` (개인 계좌) |
+| personalAccount.teamName | String | 항상 `null` (개인 계좌) |
+| personalAccount.seedMoney | Long | 초기 시드머니 |
+| personalAccount.totalAsset | Long | 현재 총 자산 (현금 + 보유 주식 평가액) |
+| personalAccount.returnAmount | Long | 수익금 (음수이면 손실) |
+| personalAccount.returnRate | Double | 수익률 (%, 소수점 2자리 반올림, 음수이면 손실) |
+| battleAccounts | Array | 참여 중인 배틀 계좌 수익률 목록 (수익률 내림차순) |
+| battleAccounts[].accountId | UUID | 계좌 고유 ID |
+| battleAccounts[].userId | UUID | 사용자 ID |
+| battleAccounts[].userName | String | 사용자 이름 |
+| battleAccounts[].teamId | Long | 소속 팀 ID |
+| battleAccounts[].teamName | String | 소속 팀 이름 |
+| battleAccounts[].seedMoney | Long | 초기 시드머니 |
+| battleAccounts[].totalAsset | Long | 현재 총 자산 |
+| battleAccounts[].returnAmount | Long | 수익금 (음수이면 손실) |
+| battleAccounts[].returnRate | Double | 수익률 (%, 소수점 2자리 반올림) |
+
+**참고**
+- 개인 계좌가 없으면 `personalAccount`는 `null`로 반환됩니다
+- 참여 중인 배틀이 없으면 `battleAccounts`는 빈 배열(`[]`)로 반환됩니다
+- `totalAsset`은 스케줄러에 의해 1초마다 갱신됩니다
+- 수익금/수익률이 음수이면 손실을 의미합니다
+
+---
+
 ## 인증
 
 대부분의 API는 JWT(JSON Web Token) 기반 인증을 사용합니다.
@@ -1333,7 +1740,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **공개 API (인증 불필요)**
 - `POST /api/auth/**` (로그인, 토큰 갱신)
-- `GET /api/battles`, `GET /api/battles/**` (배틀 조회, 팀 목록, 댓글 목록, 팀원 목록)
+- `GET /api/battles`, `GET /api/battles/**` (배틀 조회, 팀 목록, 댓글 목록, 팀원 목록, 배틀 수익률 조회)
+- `GET /api/accounts/{accountId}/profit` (계좌 ID로 수익률 조회)
 - `GET /api/rankings/**` (랭킹 조회)
 
 ---
@@ -1377,6 +1785,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `BUY`: 매수
 - `SELL`: 매도
 - `SEED_MONEY`: 시드머니 지급
+- `PROFIT_SNAPSHOT`: 수익률 스냅샷 (5분마다 자동 기록, PROGRESS 상태 배틀만 해당)
 
 #### Role
 - `GUEST`: 가입 대기 (추가 정보 입력 전)

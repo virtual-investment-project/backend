@@ -23,11 +23,15 @@ public class TeamResponse {
     private LocalDateTime updatedAt;
 
     public static TeamResponse from(Team team, int memberCount) {
+        return from(team, memberCount, false);
+    }
+
+    public static TeamResponse from(Team team, int memberCount, boolean showInviteCode) {
         return TeamResponse.builder()
                 .id(team.getId())
                 .battleId(team.getBattle().getId())
                 .name(team.getName())
-                .inviteCode(team.getInviteCode())
+                .inviteCode(showInviteCode ? team.getInviteCode() : null)
                 .description(team.getDescription())
                 .rate(team.getRate())
                 .proceed(team.getProceed())

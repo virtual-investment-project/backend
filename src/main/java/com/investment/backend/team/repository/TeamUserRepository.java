@@ -24,4 +24,8 @@ public interface TeamUserRepository extends JpaRepository<TeamUser, Long> {
 
     // LEADER가 아닌 활성 팀원 조회 (리더 이전용)
     List<TeamUser> findByTeamIdAndStatusAndRoleNot(Long teamId, TeamUserStatus status, TeamUserRole role);
+
+    // 특정 배틀에서 해당 유저가 LEADER인지 확인
+    boolean existsByTeam_Battle_IdAndUserIdAndStatusAndRole(
+            UUID battleId, UUID userId, TeamUserStatus status, TeamUserRole role);
 }
