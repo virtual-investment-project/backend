@@ -1,7 +1,6 @@
 package com.investment.backend.battle.scheduler;
 
 import com.investment.backend.battle.entity.Battle;
-import com.investment.backend.battle.enums.BattleStatus;
 import com.investment.backend.battle.repository.BattleRepository;
 import com.investment.backend.notification.enums.NotificationType;
 import com.investment.backend.notification.service.NotificationService;
@@ -36,10 +35,10 @@ public class BattleScheduler {
         LocalDateTime now = LocalDateTime.now();
 
         // YET → PROGRESS (시작 시간 도달)
-        List<Battle> battlesToStart = battleRepository.findByStatusAndStartAtBefore(BattleStatus.YET, now);
+        List<Battle> battlesToStart = battleRepository.findYetBattlesToStart(now);
         for (Battle battle : battlesToStart) {
             try {
-                battle.updateStatus(BattleStatus.PROGRESS);
+                battle.updateStatus();
                 log.info("배틀 시작 - ID: {}, 이름: {}", battle.getId(), battle.getName());
 
                 // 참여 중인 모든 유저에게 알림
@@ -51,10 +50,10 @@ public class BattleScheduler {
         }
 
         // PROGRESS → END (종료 시간 도달)
-        List<Battle> battlesToEnd = battleRepository.findByStatusAndEndAtBefore(BattleStatus.PROGRESS, now);
+        List<Battle> battlesToEnd = battleRepository.findProgressBattlesToEnd(now);
         for (Battle battle : battlesToEnd) {
             try {
-                battle.updateStatus(BattleStatus.END);
+                battle.updateStatus();
                 log.info("배틀 종료 - ID: {}, 이름: {}", battle.getId(), battle.getName());
 
                 notifyBattleParticipants(battle, "팀전 종료",

@@ -81,4 +81,10 @@ public class Team {
     public boolean hasRankChanged() {
         return previousRank != 0 && !currentRank.equals(previousRank);
     }
+
+    // 팀 수익률 업데이트 (소수점 2자리 반올림)
+    public void updateRate(float rate) {
+        this.rate = Math.round(rate * 100.0f) / 100.0f;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

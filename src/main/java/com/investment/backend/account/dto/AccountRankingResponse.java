@@ -4,6 +4,8 @@ import com.investment.backend.account.entity.Account;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Getter
@@ -31,9 +33,12 @@ public class AccountRankingResponse {
     }
 
     private static double calculateReturnRate(Long totalAsset, Long seedMoney) {
-        if (seedMoney == 0) {
+        if (seedMoney == null || seedMoney == 0) {
             return 0.0;
         }
-        return ((totalAsset - seedMoney) / (double) seedMoney) * 100;
+        double raw = ((totalAsset - seedMoney) / (double) seedMoney) * 100;
+        return BigDecimal.valueOf(raw)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

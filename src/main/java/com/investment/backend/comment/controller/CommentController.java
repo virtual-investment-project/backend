@@ -45,7 +45,7 @@ public class CommentController {
 
     /**
      * 댓글 삭제 (soft delete)
-     * TODO: 권한 체크 - 어드민 또는 본인만 삭제 가능 (현재는 본인만 가능)
+     * 삭제 가능: 본인 | 해당 배틀 팀장 | ADMIN
      */
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(

@@ -104,8 +104,21 @@ public class Battle {
         return !now.isBefore(startAt) && now.isBefore(endAt);
     }
 
-    // 배틀 상태 변경
-    public void updateStatus(BattleStatus status) {
-        this.status = status;
+    /**
+     * 현재 시각 기준으로 status 자동 전환
+     * YET → PROGRESS: startAt 도달
+     * PROGRESS → END: endAt 도달
+     */
+    public boolean updateStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        BattleStatus prev = this.status;
+
+        if (this.status == BattleStatus.YET && !now.isBefore(this.startAt)) {
+            this.status = BattleStatus.PROGRESS;
+        } else if (this.status == BattleStatus.PROGRESS && !now.isBefore(this.endAt)) {
+            this.status = BattleStatus.END;
+        }
+
+        return this.status != prev; // 변경 여부 반환
     }
 }

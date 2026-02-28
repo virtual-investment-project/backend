@@ -5,6 +5,7 @@ import com.investment.backend.account.service.AccountService;
 import com.investment.backend.holdings.dto.StockHoldingsResponse;
 import com.investment.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,8 +34,10 @@ public class AccountController {
 
     // 대결 계좌 조회
     @GetMapping("/battle/{battleId}")
-    public AccountResponse getBattleAccount(@AuthenticationPrincipal User user, @PathVariable UUID battleId) {
-        return accountService.getBattleAccount(user, battleId);
+    public ResponseEntity<AccountResponse> getBattleAccount(@AuthenticationPrincipal User user, @PathVariable UUID battleId) {
+        return accountService.getBattleAccount(user, battleId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build()); // 204: 참여하지 않은 경우
     }
 
     // 내 전체 계좌 목록 조회
