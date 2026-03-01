@@ -23,7 +23,7 @@ public class MyPageService {
     }
 
     public ProfileResponse updateProfile(User user, ProfileUpdateRequest request) {
-        user.updateProfile(request.getSchool(), request.getCompany());
+        user.updateProfile(request.getNickname(), request.getSchool(), request.getCompany());
         userRepository.save(user);
         return ProfileResponse.from(user);
     }
