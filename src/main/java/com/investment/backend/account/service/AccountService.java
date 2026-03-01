@@ -82,16 +82,20 @@ public class AccountService {
     @Transactional
     public void updateTotalAsset(Account account) {
         try {
+            // detached 상태로 넘어온 경우를 대비해 DB에서 managed 엔티티로 재조회
+            Account managed = accountRepository.findById(account.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("계좌가 존재하지 않습니다: " + account.getId()));
+
             // 현재 잔액
-            long totalAsset = account.getBalance();
+            long totalAsset = managed.getBalance();
 
             // 보유 주식 목록 조회
-            List<StockHoldingsResponse> holdings = stockHoldingsService.getHoldingsByAccount(account.getId());
+            List<StockHoldingsResponse> holdings = stockHoldingsService.getHoldingsByAccount(managed.getId());
 
             if (holdings.isEmpty()) {
                 // 보유 주식이 없으면 잔액만 총 자산
-                account.updateTotalAsset(totalAsset);
-                log.debug("총 자산 업데이트 완료 (보유 주식 없음) - 계좌 ID: {}, 총 자산: {}", account.getId(), totalAsset);
+                managed.updateTotalAsset(totalAsset);
+                log.debug("총 자산 업데이트 완료 (보유 주식 없음) - 계좌 ID: {}, 총 자산: {}", managed.getId(), totalAsset);
                 return;
             }
 
@@ -106,9 +110,9 @@ public class AccountService {
                 totalAsset += stockValue.longValue();
             }
 
-            // 총 자산 업데이트
-            account.updateTotalAsset(totalAsset);
-            log.debug("총 자산 업데이트 완료 - 계좌 ID: {}, 총 자산: {}", account.getId(), totalAsset);
+            // 총 자산 업데이트 (managed 엔티티이므로 dirty checking으로 자동 반영)
+            managed.updateTotalAsset(totalAsset);
+            log.debug("총 자산 업데이트 완료 - 계좌 ID: {}, 총 자산: {}", managed.getId(), totalAsset);
 
         } catch (Exception e) {
             log.error("총 자산 업데이트 실패 - 계좌 ID: {}, 에러: {}", account.getId(), e.getMessage());

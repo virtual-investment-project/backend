@@ -26,8 +26,8 @@ public class UserService {
         // managed entity이므로 dirty checking으로 자동 flush됨 (save 불필요)
 
         // Role이 USER로 변경되었으므로 새로운 토큰 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)

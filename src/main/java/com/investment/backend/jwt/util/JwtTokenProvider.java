@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -29,13 +30,13 @@ public class JwtTokenProvider {
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInMilliseconds;
     }
 
-    // 1. Access Token 생성 (이메일 정보를 담음)
-    public String createAccessToken(String email, Role role) {
+    // 1. Access Token 생성 (userId(UUID)를 sub에 담음)
+    public String createAccessToken(UUID userId, Role role) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(userId.toString())
                 .claim("role", role.name()) // 역할 정보 저장
                 .setIssuedAt(now) // 발행 시간
                 .setExpiration(validity) // 만료 시간
@@ -44,21 +45,21 @@ public class JwtTokenProvider {
     }
 
     // 2. Refresh Token 생성 (유효기간만 길게)
-    public String createRefreshToken(String email) {
+    public String createRefreshToken(UUID userId) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .setSubject(email) // 누구의 리프레시 토큰인지 식별 위함
+                .setSubject(userId.toString()) // 누구의 리프레시 토큰인지 식별 위함
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 3. 토큰에서 이메일(Subject) 꺼내기
-    public String extractEmail(String token) {
-        return parseClaims(token).getSubject();
+    // 3. 토큰에서 userId(UUID) 꺼내기
+    public UUID extractUserId(String token) {
+        return UUID.fromString(parseClaims(token).getSubject());
     }
 
     // 4. 토큰이 유효한지 검사
