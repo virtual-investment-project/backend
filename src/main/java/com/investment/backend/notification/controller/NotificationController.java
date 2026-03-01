@@ -46,4 +46,18 @@ public class NotificationController {
         int count = notificationService.markAllAsRead(user);
         return ResponseEntity.ok(Map.of("updated", count));
     }
+
+    // FCM 디바이스 토큰 등록/갱신
+    // 앱 시작 시 프론트가 토큰을 받아서 위 엔드포인트로 전송
+    @PostMapping("/fcm-token")
+    public ResponseEntity<Void> registerFcmToken(
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal User user) {
+        String fcmToken = body.get("fcmToken");
+        if (fcmToken == null || fcmToken.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        notificationService.saveFcmToken(user, fcmToken);
+        return ResponseEntity.ok().build();
+    }
 }

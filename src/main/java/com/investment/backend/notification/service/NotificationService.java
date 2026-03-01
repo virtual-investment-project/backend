@@ -5,6 +5,7 @@ import com.investment.backend.notification.entity.Notification;
 import com.investment.backend.notification.enums.NotificationType;
 import com.investment.backend.notification.repository.NotificationRepository;
 import com.investment.backend.user.entity.User;
+import com.investment.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ import java.util.UUID;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
+    private final FcmService fcmService;
 
     // 알림 생성 (유저의 알림 설정을 확인하여, 비활성화된 알림은 생성하지 않음)
     public Notification createNotification(User user, NotificationType type, String title, String message,
@@ -40,6 +43,10 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         log.info("알림 생성 - ID: {}, 유저: {}, 유형: {}, 제목: {}", saved.getId(), user.getId(), type, title);
+
+        // FCM 푸시 알림 전송 (비동기 실패 시 로그만 남기고 계속 진행)
+        fcmService.sendPushNotification(user.getFcmToken(), type, title, message, data);
+
         return saved;
     }
 
@@ -83,5 +90,12 @@ public class NotificationService {
             case RANK_CHANGE -> user.getRankChange();
             case PRICE_ALERT -> user.getStockPriceAlert();
         };
+    }
+
+    // FCM 디바이스 토큰 저장/갱신
+    public void saveFcmToken(User user, String fcmToken) {
+        user.updateFcmToken(fcmToken);
+        userRepository.save(user);
+        log.info("FCM 토큰 저장 - 유저: {}", user.getId());
     }
 }
