@@ -89,7 +89,10 @@ public class User {
         this.refreshToken = updateRefreshToken;
     }
 
-    public void updateProfile(String school, String company) {
+    public void updateProfile(String nickname, String school, String company) {
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
         if (school != null) {
             this.school = school;
         }

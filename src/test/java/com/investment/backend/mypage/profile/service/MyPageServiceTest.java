@@ -71,10 +71,12 @@ class MyPageServiceTest {
                 .refreshToken("valid-refresh-token")
                 .build();
 
+        ReflectionTestUtils.setField(user, "nickname", "투자왕");
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
         ProfileUpdateRequest request = new ProfileUpdateRequest();
+        ReflectionTestUtils.setField(request, "nickname", "새로운투자왕");
         ReflectionTestUtils.setField(request, "school", "고려대학교");
         ReflectionTestUtils.setField(request, "company", "라인");
 
@@ -82,8 +84,10 @@ class MyPageServiceTest {
         ProfileResponse response = myPageService.updateProfile(user, request);
 
         // then
+        assertThat(user.getNickname()).isEqualTo("새로운투자왕");
         assertThat(user.getSchool()).isEqualTo("고려대학교");
         assertThat(user.getCompany()).isEqualTo("라인");
+        assertThat(response.getNickname()).isEqualTo("새로운투자왕");
         assertThat(response.getSchool()).isEqualTo("고려대학교");
         assertThat(response.getCompany()).isEqualTo("라인");
 
@@ -104,10 +108,12 @@ class MyPageServiceTest {
                 .refreshToken("valid-refresh-token")
                 .build();
 
+        ReflectionTestUtils.setField(user, "nickname", "투자왕");
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
         ProfileUpdateRequest request = new ProfileUpdateRequest();
+        ReflectionTestUtils.setField(request, "nickname", null);
         ReflectionTestUtils.setField(request, "school", "서울대학교");
         ReflectionTestUtils.setField(request, "company", null);
 
@@ -115,8 +121,10 @@ class MyPageServiceTest {
         ProfileResponse response = myPageService.updateProfile(user, request);
 
         // then
+        assertThat(user.getNickname()).isEqualTo("투자왕"); // 변경되지 않음
         assertThat(user.getSchool()).isEqualTo("서울대학교");
         assertThat(user.getCompany()).isEqualTo("카카오"); // 변경되지 않음
+        assertThat(response.getNickname()).isEqualTo("투자왕");
         assertThat(response.getSchool()).isEqualTo("서울대학교");
         assertThat(response.getCompany()).isEqualTo("카카오");
 
@@ -137,10 +145,12 @@ class MyPageServiceTest {
                 .refreshToken("valid-refresh-token")
                 .build();
 
+        ReflectionTestUtils.setField(user, "nickname", "투자왕");
         ReflectionTestUtils.setField(user, "school", "연세대학교");
         ReflectionTestUtils.setField(user, "company", "카카오");
 
         ProfileUpdateRequest request = new ProfileUpdateRequest();
+        ReflectionTestUtils.setField(request, "nickname", null);
         ReflectionTestUtils.setField(request, "school", null);
         ReflectionTestUtils.setField(request, "company", "네이버");
 
@@ -148,8 +158,10 @@ class MyPageServiceTest {
         ProfileResponse response = myPageService.updateProfile(user, request);
 
         // then
+        assertThat(user.getNickname()).isEqualTo("투자왕"); // 변경되지 않음
         assertThat(user.getSchool()).isEqualTo("연세대학교"); // 변경되지 않음
         assertThat(user.getCompany()).isEqualTo("네이버");
+        assertThat(response.getNickname()).isEqualTo("투자왕");
         assertThat(response.getSchool()).isEqualTo("연세대학교");
         assertThat(response.getCompany()).isEqualTo("네이버");
 
