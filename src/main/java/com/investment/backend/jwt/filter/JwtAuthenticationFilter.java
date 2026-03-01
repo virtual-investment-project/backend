@@ -16,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,21 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 2. 토큰이 있고, 유효하다면?
         if (token != null) {
             if (jwtTokenProvider.validateToken(token)) {
-                // 3. 토큰에서 이메일 꺼내기
-                String email = jwtTokenProvider.extractEmail(token);
-                log.info("유효한 토큰 발견! 사용자 이메일: {}", email);
+                // 3. 토큰에서 userId(UUID) 꺼내기
+                UUID userId = jwtTokenProvider.extractUserId(token);
+                log.info("유효한 토큰 발견! 사용자 ID: {}", userId);
 
                 // 4. DB에서 유저 정보 찾아서 인증 객체 만들기 (SecurityContext에 저장)
-                userRepository.findByEmail(email).ifPresentOrElse(user -> {
+                userRepository.findById(userId).ifPresentOrElse(user -> {
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
                             user,
                             null,
                             Collections.singleton(new SimpleGrantedAuthority(user.getRole().name()))
                     );
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.info("SecurityContext에 인증 객체 저장 완료: {}", email);
+                    log.info("SecurityContext에 인증 객체 저장 완료: {}", userId);
                 }, () -> {
-                    log.warn("토큰은 유효하지만 DB에서 유저를 찾을 수 없습니다. 이메일: {}", email);
+                    log.warn("토큰은 유효하지만 DB에서 유저를 찾을 수 없습니다. userId: {}", userId);
                 });
             } else {
                 log.warn("토큰 검증 실패 (유효하지 않은 토큰)");

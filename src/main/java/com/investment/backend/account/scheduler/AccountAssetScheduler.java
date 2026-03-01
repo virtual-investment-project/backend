@@ -54,10 +54,10 @@ public class AccountAssetScheduler {
             
             if (allSymbols.isEmpty()) {
                 log.info("모든 계좌에 보유 주식이 없습니다.");
-                // 잔액만으로 총 자산 업데이트
+                // accountService.updateTotalAsset 경유 → managed 엔티티로 재조회 후 DB 반영
                 for (Account account : accounts) {
                     try {
-                        account.updateTotalAsset(account.getBalance());
+                        accountService.updateTotalAsset(account);
                     } catch (Exception e) {
                         log.error("계좌 총 자산 업데이트 실패 - 계좌 ID: {}, 에러: {}", account.getId(), e.getMessage());
                     }

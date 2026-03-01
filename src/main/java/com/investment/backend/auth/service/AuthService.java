@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -68,8 +69,8 @@ public class AuthService {
             }
 
             // 앱으로 내려줄 응답 생성 (토큰 + Role)
-            String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
-            String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+            String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
+            String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
             
             // Refresh Token을 SHA-256으로 해시화하여 DB에 저장
             String hashedRefreshToken = DigestUtils.sha256Hex(refreshToken);
@@ -95,11 +96,11 @@ public class AuthService {
             throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
         }
 
-        // Refresh Token에서 이메일 추출
-        String email = jwtTokenProvider.extractEmail(refreshToken);
+        // Refresh Token에서 userId(UUID) 추출
+        UUID userId = jwtTokenProvider.extractUserId(refreshToken);
 
         // DB에서 사용자 조회 및 Refresh Token 일치 여부 확인
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // DB에 저장된 해시화된 Refresh Token과 비교
@@ -113,8 +114,8 @@ public class AuthService {
         }
 
         // 새로운 Access Token과 Refresh Token 생성 (Token Rotation)
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
         
         // 새로운 Refresh Token을 SHA-256으로 해시화하여 DB에 저장 (기존 토큰 무효화)
         String hashedNewRefreshToken = DigestUtils.sha256Hex(newRefreshToken);
