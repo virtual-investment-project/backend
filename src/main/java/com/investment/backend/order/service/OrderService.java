@@ -38,6 +38,9 @@ public class OrderService {
         Account account = accountRepository.findById(request.getAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
 
+        // 배틀 거래 가능 시간 검증 (배틀 시작 전/종료 후 거래 차단)
+        account.validateTradingAllowed();
+
         BigDecimal totalAmount = request.getOrderPrice().multiply(request.getQuantity());
 
         // 주문 유형별 검증
