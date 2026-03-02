@@ -17,7 +17,8 @@ public class FcmService {
 
     private static final String ANDROID_CHANNEL_ID = "investment_notifications";
 
-    public void sendPushNotification(String fcmToken, NotificationType type, String title, String body, String dataJson) {
+    public void sendPushNotification(String fcmToken, NotificationType type, String title, String body,
+            String dataJson) {
         if (fcmToken == null || fcmToken.isBlank()) {
             log.debug("FCM 토큰 없음 - 푸시 알림 생략 (type={})", type);
             return;
@@ -35,10 +36,12 @@ public class FcmService {
                             .setTitle(title)
                             .setBody(body)
                             .build())
-                    // Android 8.0+ 알림 에 필수: 체널 ID 지정
+                    // Android 8.0+ 알림에 필수: 채널 ID + 메시지 우선순위
                     .setAndroidConfig(AndroidConfig.builder()
+                            .setPriority(AndroidConfig.Priority.HIGH) // 앱 종료/Doze 상태에서도 즉시 전달
                             .setNotification(AndroidNotification.builder()
                                     .setChannelId(ANDROID_CHANNEL_ID)
+                                    .setPriority(AndroidNotification.Priority.MAX)
                                     .build())
                             .build())
                     .putData("type", type.name());
