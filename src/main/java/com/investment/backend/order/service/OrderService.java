@@ -40,6 +40,15 @@ public class OrderService {
 
         // 배틀 거래 가능 시간 검증 (배틀 시작 전/종료 후 거래 차단)
         account.validateTradingAllowed();
+      
+        // 배틀 계좌인 경우 지정 종목만 거래 가능
+        if (account.getBattle() != null) {
+            String allowedTicker = account.getBattle().getTicker();
+            if (!allowedTicker.equalsIgnoreCase(request.getStockCode())) {
+                throw new IllegalArgumentException(
+                        "이 배틀 계좌는 '" + allowedTicker + "' 종목만 거래할 수 있습니다.");
+            }
+        }
 
         BigDecimal totalAmount = request.getOrderPrice().multiply(request.getQuantity());
 
