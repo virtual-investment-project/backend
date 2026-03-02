@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +39,7 @@ class UserServiceTest {
     @DisplayName("추가 정보를 입력하면 닉네임, 학교가 변경되고 DB에 저장되어야 한다")
     void updateAdditionalInfo() {
         // given
+        UUID testUserId = UUID.randomUUID();
         String email = "test@gmail.com";
         User user = User.builder()
                 .email(email)
@@ -48,10 +50,11 @@ class UserServiceTest {
                 .socialId("google123")
                 .refreshToken("")
                 .build();
+        ReflectionTestUtils.setField(user, "id", testUserId);
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(jwtTokenProvider.createAccessToken(email, Role.USER)).thenReturn("new-access-token");
-        when(jwtTokenProvider.createRefreshToken(email)).thenReturn("new-refresh-token");
+        when(jwtTokenProvider.createAccessToken(testUserId, Role.USER)).thenReturn("new-access-token");
+        when(jwtTokenProvider.createRefreshToken(testUserId)).thenReturn("new-refresh-token");
 
         UserAdditionalInfoRequest request = new UserAdditionalInfoRequest();
         ReflectionTestUtils.setField(request, "nickname", "워렌버핏");
