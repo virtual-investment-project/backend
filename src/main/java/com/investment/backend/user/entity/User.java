@@ -61,6 +61,9 @@ public class User {
     @Column(nullable = false)
     private String refreshToken;
 
+    @Column(length = 512)
+    private String fcmToken;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -118,5 +121,9 @@ public class User {
             this.rankChange = rankChange;
         if (stockPriceAlert != null)
             this.stockPriceAlert = stockPriceAlert;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }

@@ -34,4 +34,7 @@ jwt:
   access-expiration: 3600000  # 1시간 (밀리초)
   refresh-expiration: 1209600000 # 14일
 
-
+# Firebase Admin SDK 설정 (FCM 푸시 알림)
+# src/main/resources/firebase-service-account.json 에 서비스 계정 JSON 파일 위치
+firebase:
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:virtual-investment-firebase-adminsdk-fbsvc-eb76c719b1.json}

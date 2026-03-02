@@ -49,6 +49,9 @@ dependencies {
 
 	// .env 파일 자동 로드
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+	// Firebase Admin SDK (FCM 푸시 알림)
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 }
 
 tasks.named('test') {
