@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -43,6 +44,7 @@ class AuthServiceTest {
     private final String testSocialId = "google123";
     private final String testAccessToken = "test-access-token";
     private final String testRefreshToken = "test-refresh-token";
+    private final UUID testUserId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -54,12 +56,12 @@ class AuthServiceTest {
     void googleLogin_Success_NewUser() throws Exception {
         // given
         String idTokenString = "valid-id-token";
-        
+
         // Google 토큰 검증 관련 Mock
         GoogleIdToken mockIdToken = mock(GoogleIdToken.class);
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
         GoogleIdTokenVerifier mockVerifier = mock(GoogleIdTokenVerifier.class);
-        
+
         when(mockPayload.getEmail()).thenReturn(testEmail);
         when(mockPayload.get("name")).thenReturn(testName);
         when(mockPayload.getSubject()).thenReturn(testSocialId);
@@ -68,7 +70,7 @@ class AuthServiceTest {
 
         // 사용자 조회 결과 없음 (신규 사용자)
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.empty());
-        
+
         // 새 사용자 저장
         User newUser = User.builder()
                 .email(testEmail)
@@ -77,11 +79,12 @@ class AuthServiceTest {
                 .socialId(testSocialId)
                 .role(Role.GUEST)
                 .build();
+        ReflectionTestUtils.setField(newUser, "id", testUserId);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
-        
+
         // 토큰 생성
-        when(jwtTokenProvider.createAccessToken(testEmail, Role.GUEST)).thenReturn(testAccessToken);
-        when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(testRefreshToken);
+        when(jwtTokenProvider.createAccessToken(testUserId, Role.GUEST)).thenReturn(testAccessToken);
+        when(jwtTokenProvider.createRefreshToken(testUserId)).thenReturn(testRefreshToken);
 
         // when
         try (MockedConstruction<GoogleIdTokenVerifier.Builder> builderConstruction = mockConstruction(
@@ -90,7 +93,7 @@ class AuthServiceTest {
                     when(mock.setAudience(anyList())).thenReturn(mock);
                     when(mock.build()).thenReturn(mockVerifier);
                 })) {
-            
+
             GoogleLoginResponse result = authService.googleLogin(idTokenString);
 
             // then
@@ -102,8 +105,8 @@ class AuthServiceTest {
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository).save(any(User.class));
-            verify(jwtTokenProvider).createAccessToken(testEmail, Role.GUEST);
-            verify(jwtTokenProvider).createRefreshToken(testEmail);
+            verify(jwtTokenProvider).createAccessToken(testUserId, Role.GUEST);
+            verify(jwtTokenProvider).createRefreshToken(testUserId);
         }
     }
 
@@ -112,12 +115,12 @@ class AuthServiceTest {
     void googleLogin_Success_ExistingUser() throws Exception {
         // given
         String idTokenString = "valid-id-token";
-        
+
         // Google 토큰 검증 관련 Mock
         GoogleIdToken mockIdToken = mock(GoogleIdToken.class);
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
         GoogleIdTokenVerifier mockVerifier = mock(GoogleIdTokenVerifier.class);
-        
+
         when(mockPayload.getEmail()).thenReturn(testEmail);
         when(mockPayload.get("name")).thenReturn(testName);
         when(mockPayload.getSubject()).thenReturn(testSocialId);
@@ -132,11 +135,12 @@ class AuthServiceTest {
                 .socialId(testSocialId)
                 .role(Role.USER)
                 .build();
+        ReflectionTestUtils.setField(existingUser, "id", testUserId);
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(existingUser));
-        
+
         // 토큰 생성
-        when(jwtTokenProvider.createAccessToken(testEmail, Role.USER)).thenReturn(testAccessToken);
-        when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(testRefreshToken);
+        when(jwtTokenProvider.createAccessToken(testUserId, Role.USER)).thenReturn(testAccessToken);
+        when(jwtTokenProvider.createRefreshToken(testUserId)).thenReturn(testRefreshToken);
 
         // when
         try (MockedConstruction<GoogleIdTokenVerifier.Builder> builderConstruction = mockConstruction(
@@ -145,7 +149,7 @@ class AuthServiceTest {
                     when(mock.setAudience(anyList())).thenReturn(mock);
                     when(mock.build()).thenReturn(mockVerifier);
                 })) {
-            
+
             GoogleLoginResponse result = authService.googleLogin(idTokenString);
 
             // then
@@ -157,8 +161,8 @@ class AuthServiceTest {
 
             verify(userRepository).findByEmail(testEmail);
             verify(userRepository, never()).save(any(User.class)); // 기존 사용자이므로 저장 X
-            verify(jwtTokenProvider).createAccessToken(testEmail, Role.USER);
-            verify(jwtTokenProvider).createRefreshToken(testEmail);
+            verify(jwtTokenProvider).createAccessToken(testUserId, Role.USER);
+            verify(jwtTokenProvider).createRefreshToken(testUserId);
         }
     }
 
@@ -167,7 +171,7 @@ class AuthServiceTest {
     void googleLogin_Fail_InvalidToken() throws Exception {
         // given
         String invalidIdTokenString = "invalid-id-token";
-        
+
         GoogleIdTokenVerifier mockVerifier = mock(GoogleIdTokenVerifier.class);
         when(mockVerifier.verify(invalidIdTokenString)).thenReturn(null); // null 반환으로 유효하지 않은 토큰 시뮬레이션
 
@@ -178,7 +182,7 @@ class AuthServiceTest {
                     when(mock.setAudience(anyList())).thenReturn(mock);
                     when(mock.build()).thenReturn(mockVerifier);
                 })) {
-            
+
             assertThatThrownBy(() -> authService.googleLogin(invalidIdTokenString))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("로그인 처리 중 오류 발생");
@@ -192,22 +196,23 @@ class AuthServiceTest {
         String refreshToken = "valid-refresh-token";
         String newAccessToken = "new-access-token";
         String newRefreshToken = "new-refresh-token";
-        
+
         // SHA-256 해시값 계산
         String hashedRefreshToken = org.apache.commons.codec.digest.DigestUtils.sha256Hex(refreshToken);
-        
+
         User user = User.builder()
                 .email(testEmail)
                 .name(testName)
                 .role(Role.USER)
                 .refreshToken(hashedRefreshToken)
                 .build();
+        ReflectionTestUtils.setField(user, "id", testUserId);
 
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(testEmail);
-        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
-        when(jwtTokenProvider.createAccessToken(testEmail, Role.USER)).thenReturn(newAccessToken);
-        when(jwtTokenProvider.createRefreshToken(testEmail)).thenReturn(newRefreshToken);
+        when(jwtTokenProvider.extractUserId(refreshToken)).thenReturn(testUserId);
+        when(userRepository.findById(testUserId)).thenReturn(Optional.of(user));
+        when(jwtTokenProvider.createAccessToken(testUserId, Role.USER)).thenReturn(newAccessToken);
+        when(jwtTokenProvider.createRefreshToken(testUserId)).thenReturn(newRefreshToken);
 
         // when
         TokenResponse result = authService.refreshAccessToken(refreshToken);
@@ -218,10 +223,10 @@ class AuthServiceTest {
         assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
 
         verify(jwtTokenProvider).validateToken(refreshToken);
-        verify(jwtTokenProvider).extractEmail(refreshToken);
-        verify(userRepository).findByEmail(testEmail);
-        verify(jwtTokenProvider).createAccessToken(testEmail, Role.USER);
-        verify(jwtTokenProvider).createRefreshToken(testEmail);
+        verify(jwtTokenProvider).extractUserId(refreshToken);
+        verify(userRepository).findById(testUserId);
+        verify(jwtTokenProvider).createAccessToken(testUserId, Role.USER);
+        verify(jwtTokenProvider).createRefreshToken(testUserId);
     }
 
     @Test
@@ -245,11 +250,11 @@ class AuthServiceTest {
     void refreshAccessToken_Fail_UserNotFound() {
         // given
         String refreshToken = "valid-refresh-token";
-        String nonExistentEmail = "nonexistent@gmail.com";
+        UUID nonExistentUserId = UUID.randomUUID();
 
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(nonExistentEmail);
-        when(userRepository.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
+        when(jwtTokenProvider.extractUserId(refreshToken)).thenReturn(nonExistentUserId);
+        when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> authService.refreshAccessToken(refreshToken))
@@ -257,8 +262,8 @@ class AuthServiceTest {
                 .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(jwtTokenProvider).validateToken(refreshToken);
-        verify(jwtTokenProvider).extractEmail(refreshToken);
-        verify(userRepository).findByEmail(nonExistentEmail);
+        verify(jwtTokenProvider).extractUserId(refreshToken);
+        verify(userRepository).findById(nonExistentUserId);
     }
 
     @Test
@@ -267,24 +272,25 @@ class AuthServiceTest {
         // given
         String refreshToken = "valid-refresh-token";
         String wrongHashedToken = "wrong-hashed-token";
-        
+
         User user = User.builder()
                 .email(testEmail)
                 .name(testName)
                 .role(Role.USER)
                 .refreshToken(wrongHashedToken)
                 .build();
+        ReflectionTestUtils.setField(user, "id", testUserId);
 
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(testEmail);
-        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
+        when(jwtTokenProvider.extractUserId(refreshToken)).thenReturn(testUserId);
+        when(userRepository.findById(testUserId)).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> authService.refreshAccessToken(refreshToken))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Refresh Token이 일치하지 않습니다.");
 
-        verify(jwtTokenProvider, never()).createAccessToken(anyString(), any(Role.class));
+        verify(jwtTokenProvider, never()).createAccessToken(any(UUID.class), any(Role.class));
     }
 
     @Test
@@ -292,17 +298,18 @@ class AuthServiceTest {
     void refreshAccessToken_Fail_NullRefreshToken() {
         // given
         String refreshToken = "valid-refresh-token";
-        
+
         User user = User.builder()
                 .email(testEmail)
                 .name(testName)
                 .role(Role.USER)
                 .refreshToken(null) // null인 경우
                 .build();
+        ReflectionTestUtils.setField(user, "id", testUserId);
 
         when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.extractEmail(refreshToken)).thenReturn(testEmail);
-        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
+        when(jwtTokenProvider.extractUserId(refreshToken)).thenReturn(testUserId);
+        when(userRepository.findById(testUserId)).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> authService.refreshAccessToken(refreshToken))
@@ -310,8 +317,8 @@ class AuthServiceTest {
                 .hasMessage("Refresh Token이 일치하지 않습니다.");
 
         verify(jwtTokenProvider).validateToken(refreshToken);
-        verify(jwtTokenProvider).extractEmail(refreshToken);
-        verify(userRepository).findByEmail(testEmail);
-        verify(jwtTokenProvider, never()).createAccessToken(anyString(), any(Role.class));
+        verify(jwtTokenProvider).extractUserId(refreshToken);
+        verify(userRepository).findById(testUserId);
+        verify(jwtTokenProvider, never()).createAccessToken(any(UUID.class), any(Role.class));
     }
 }

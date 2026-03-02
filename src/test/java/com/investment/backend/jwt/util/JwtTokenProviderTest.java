@@ -4,6 +4,8 @@ import com.investment.backend.user.enums.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JwtTokenProviderTest {
@@ -20,11 +22,11 @@ class JwtTokenProviderTest {
     @DisplayName("1. 토큰이 정상적으로 생성되는지 확인")
     void createToken() {
         // given
-        String email = "test@gmail.com";
+        UUID userId = UUID.randomUUID();
         Role role = Role.USER;
 
         // when
-        String accessToken = jwtTokenProvider.createAccessToken(email, role);
+        String accessToken = jwtTokenProvider.createAccessToken(userId, role);
 
         // then
         System.out.println("생성된 토큰: " + accessToken);
@@ -33,25 +35,25 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("2. 토큰에서 이메일을 다시 꺼낼 수 있는지 확인")
-    void extractEmail() {
+    @DisplayName("2. 토큰에서 userId(UUID)를 다시 꺼낼 수 있는지 확인")
+    void extractUserId() {
         // given
-        String email = "hello@kakao.com";
+        UUID userId = UUID.randomUUID();
         Role role = Role.USER;
-        String token = jwtTokenProvider.createAccessToken(email, role);
+        String token = jwtTokenProvider.createAccessToken(userId, role);
 
         // when
-        String extractedEmail = jwtTokenProvider.extractEmail(token);
+        UUID extractedUserId = jwtTokenProvider.extractUserId(token);
 
         // then
-        assertThat(extractedEmail).isEqualTo(email); // 넣은 이메일 = 꺼낸 이메일
+        assertThat(extractedUserId).isEqualTo(userId); // 넣은 UUID = 꺼낸 UUID
     }
 
     @Test
     @DisplayName("3. 유효한 토큰인지 검증하는 기능 확인")
     void validateToken() {
         // given
-        String token = jwtTokenProvider.createAccessToken("user@naver.com", Role.USER);
+        String token = jwtTokenProvider.createAccessToken(UUID.randomUUID(), Role.USER);
 
         // when
         boolean isValid = jwtTokenProvider.validateToken(token);
