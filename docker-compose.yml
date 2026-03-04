@@ -17,12 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:alpine
-    container_name: investment-redis
-    ports:
-      - "6379:6379"
-
   backend:
     build:
       context: .
@@ -34,16 +28,12 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-investment_db}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       DB_USERNAME: ${DB_USERNAME:-root}
       DB_PASSWORD: ${DB_PASSWORD}
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_started
     restart: unless-stopped
 
 volumes:

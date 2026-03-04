@@ -20,8 +20,12 @@ RUN --mount=type=cache,target=/root/.gradle \
     -Dorg.gradle.internal.http.socketTimeout=120000 \
     -Dorg.gradle.internal.http.connectionTimeout=120000
 
-FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:InitialRAMPercentage=50.0", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-jar", "app.jar"]
