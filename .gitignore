@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables ###
+.env
+
+### Firebase Service Account (민감 정보 - 절대 커밋 금지) ###
+src/main/resources/firebase-service-account.json
+src/main/resources/virtual-investment-firebase-adminsdk-fbsvc-eb76c719b1.json
