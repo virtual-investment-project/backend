@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     container_name: investment-backend
     ports:
-      - "8080:8080"
+      - "80:8080"
     environment:
       DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-investment_db}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       DB_USERNAME: ${DB_USERNAME:-root}
