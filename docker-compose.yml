@@ -4,8 +4,8 @@ services:
     image: mysql:8.0
     container_name: investment-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: investment_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-investment_db}
     ports:
       - "3306:3306"
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -31,9 +31,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/investment_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-investment_db}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD}
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
